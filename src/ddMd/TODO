@@ -1,21 +1,8 @@
-Documentation
--------------
-
-- Add example of ddSim default configuration file format to user
-  documentation. Make clearer distinction between McMd and DdMd files.
-
-Main Loop and Command Script
-----------------------------
-
-- Modify setup of integrator, add ability to continue a simulation without 
-  reinitialization.
-
-- Add commands to clear state of integrator, all statistics, and diagnostics.
 
 Extensibility, Ease-of-Use
 ----------------------------
 
-- Make factories modifiable, by defining *Factory.cpp_r files.
+- Make factories easily modifiable, by defining *Factory.cpp_r files.
   Modify documentation accordingly.
 
 Testing
