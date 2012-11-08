@@ -320,8 +320,9 @@ namespace McMd
             } else {
                accept = random.metropolis( boltzmann(newH-oldH) );
             }
+      } else {
+            accept = random.metropolis( boltzmann(newH-oldH) );
       }
-      accept = random.metropolis( boltzmann(newH-oldH) );
 
       if (accept) {
          // read back new boundary
