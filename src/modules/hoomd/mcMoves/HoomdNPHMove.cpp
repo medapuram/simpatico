@@ -300,26 +300,6 @@ namespace McMd
                accept = random.metropolis( boltzmann(newH-oldH) );
             }
          }
-      }
-      if (integrationMode_ == TwoStepNPHGPU::cubic) {
-            double  newAspectRatioxy, aspectRatioParamxy, newAspectRatioyz, aspectRatioParamyz;
-            newAspectRatioxy = double(newLengths[0]/newLengths[1]);
-            newAspectRatioyz = double(newLengths[1]/newLengths[1]);
-            if ( newAspectRatioxy >= 1.0 ) {
-               aspectRatioParamxy = newAspectRatioxy - 1.0;
-            } else {
-               aspectRatioParamxy = -newAspectRatioxy + 1.0;
-            }
-            if ( newAspectRatioyz >= 1.0 ) {
-               aspectRatioParamyz = newAspectRatioyz - 1.0;
-            } else {
-               aspectRatioParamyz = -newAspectRatioyz + 1.0;
-            }
-            if ( aspectRatioParamxy > 0.75 || aspectRatioParamyz > 0.75 ) {
-               accept = false;
-            } else {
-               accept = random.metropolis( boltzmann(newH-oldH) );
-            }
       } else {
             accept = random.metropolis( boltzmann(newH-oldH) );
       }
