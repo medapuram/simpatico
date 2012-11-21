@@ -152,8 +152,8 @@ namespace Inter
       /// Array of Miller index IntVectors for the reciprocal lattice vectors.
       DArray<IntVector>  waveIntVectors_;
 
-      /// Array of floating point reciprocal lattice vectors.
-      DArray<Vector>  waveVectors_;
+      /// Interface widths array ofsize nWaveVectors
+      DArray<double> interfaceWidths_;
 
       /// Pointer to associated Boundary object.
       Boundary *boundaryPtr_;
@@ -174,21 +174,18 @@ namespace Inter
    inline double OrderingExternal::energy(const Vector& position, int type) const
    {
       Vector cellLengths = boundaryPtr_->lengths();
-      Vector reducedPosition = position;
-      for (int i = 0; i < Dimension; ++i) {
-         reducedPosition[i] /= cellLengths[i];
-      }
-
-      DArray<double> arg;
-      arg.allocate(nWaveVectors_);
 
       double cosine = 0.0;
 
       for (int i = 0; i < nWaveVectors_; ++i) {
-         arg[i] = reducedPosition.dot(waveVectors_[i]);
-         cosine += cos(arg[i]);
+         Vector q(2.0*M_PI*waveIntVectors_[i][0]/cellLengths[0], 
+                  2.0*M_PI*waveIntVectors_[i][1]/cellLengths[1], 
+                  2.0*M_PI*waveIntVectors_[i][2]/cellLengths[2]);
+         double arg, clipParameter;
+         arg = position.q;
+         clipParameter = 1.0/( interfaceWidths_[i]*(q.cellLengths) );
+         cosine += clipParameter*cos(arg);
       }
-
       return prefactor_[type]*externalParameter_*tanh(cosine);
    }
 
@@ -199,47 +196,27 @@ namespace Inter
    void OrderingExternal::getForce(const Vector& position, int type, 
                                      Vector& force) const
    {
-      DArray<double> arg;
-      arg.allocate(nWaveVectors_);
-
-      DArray<double> sine;
-      sine.allocate(nWaveVectors_);
-
-      Vector deriv;
-      deriv.zero();
-
-      DMatrix<double> derivWave;
-      derivWave.allocate(nWaveVectors_, Dimension);
+      Vector cellLengths = boundaryPtr_->lengths();
 
       double cosine = 0.0;
-      int i,j;
-
-      Vector dimensions = boundaryPtr_->lengths();
-      Vector reducedPosition = position;
-      for (j = 0; j < Dimension; ++j) {
-         reducedPosition[j] /= dimensions[j];
-      }
-
+      Vector deriv;
+      deriv.zero();
       for (i = 0; i < nWaveVectors_; ++i) {
-         arg[i] = reducedPosition.dot(waveVectors_[i]);
-         sine[i] = sin(arg[i]);
-
-         for (j = 0; j < Dimension; ++j) {
-            derivWave(i,j) = -sine[i]*waveVectors_[i][j];
-            deriv[j] += derivWave(i,j);
-         }
-
-         cosine += cos(arg[i]);
+         Vector q(2.0*M_PI*waveIntVectors_[i][0]/cellLengths[0],
+                  2.0*M_PI*waveIntVectors_[i][1]/cellLengths[1],
+                  2.0*M_PI*waveIntVectors_[i][2]/cellLengths[2]);
+         double arg, sine, clip_parameter;
+         arg = position.q;
+         clipParameter = 1.0/( interfaceWidths_[i]*(q.cellLengths) );
+         cosine += clipParameter*cos(arg);
+         sine = clipParameter*sin(arg);
+         deriv = deriv - sine*q;
+         cosine += clipParameter*cos(arg);
       }
-
       double tanH = tanh(cosine);
       double sechSq = (1.0 - tanH*tanH);
-      force.zero();
-
-      for (j = 0; j < Dimension; ++j) {
-         force[j] += prefactor_[type]*externalParameter_*sechSq;
-         force[j] *= deriv[j];
-      }
+      double f = prefactor_[type]*externalParameter_*sechSq;
+      force = f*deriv;
    }
  
 }

@@ -47,8 +47,10 @@ namespace Inter
       for (int j=0; j < Dimension; ++j) {
         for (int i=0; i < nWaveVectors_; ++i) {
           waveIntVectors_[i][j] = other.waveIntVectors_[i][j];
-          waveVectors_[i][j] = other.waveVectors_[i][j];
         }
+      }
+      for (int i=0; i < nWaveVectors_; ++i) {
+        interfaceWidths_[i] = other.interfaceWidths_[i];
       }
    } 
      
@@ -68,8 +70,10 @@ namespace Inter
       for (int j=0; j < Dimension; ++j) {
         for (int i=0; i < nWaveVectors_; ++i) {
           waveIntVectors_[i][j] = other.waveIntVectors_[i][j];
-          waveVectors_[i][j] = other.waveVectors_[i][j];
         }
+      }
+      for (int i=0; i < nWaveVectors_; ++i) {
+        interfaceWidths_[i] = other.interfaceWidths_[i];
       }
       return *this;
    }
@@ -127,16 +131,9 @@ namespace Inter
       waveIntVectors_.allocate(nWaveVectors_);
       readDArray<IntVector>(in, "waveIntVectors", waveIntVectors_, nWaveVectors_);
       
-      waveVectors_.allocate(nWaveVectors_);
-      // Calculate wavevectors
-      for (int i = 0; i < nWaveVectors_; ++i) {
-         waveVectors_[i] = Vector::Zero;
-         for (int j = 0; j < Dimension; ++j) {
-            Vector dWave  = Vector::Zero;
-            dWave[j] = 2.0*M_PI*waveIntVectors_[i][j];
-            waveVectors_[i] += dWave;
-         }
-      }
+      interfaceWidths_.allocate(nWaveVectors_);
+      readDArray<double>(in, "interfaceWidths", interfaceWidths_, nWaveVectors_);
+
       isInitialized_ = true;
    }
 
