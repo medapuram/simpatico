@@ -272,11 +272,11 @@ namespace McMd
             double  newAspectRatio, aspectRatioParam;
             newAspectRatio = double(newLengths[0]/newLengths[1]);
             if ( newAspectRatio >= 1.0 ) {
-               aspectRatioParam = newAspectRatio - 1.0;
+               aspectRatioParam = newAspectRatio;
             } else {
-               aspectRatioParam = -newAspectRatio + 1.0;
+               aspectRatioParam = 1.0/newAspectRatio;
             }
-            if ( aspectRatioParam > 0.75 ) {
+            if ( aspectRatioParam > 3.0 ) {
                accept = false;
             } else {
                accept = random.metropolis( boltzmann(newH-oldH) );
