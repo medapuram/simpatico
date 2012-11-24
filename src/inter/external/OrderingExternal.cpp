@@ -43,7 +43,6 @@ namespace Inter
         prefactor_[i] = other.prefactor_[i];
       }
       waveIntVectors_.allocate(nWaveVectors_);
-      waveVectors_.allocate(nWaveVectors_);
       for (int j=0; j < Dimension; ++j) {
         for (int i=0; i < nWaveVectors_; ++i) {
           waveIntVectors_[i][j] = other.waveIntVectors_[i][j];

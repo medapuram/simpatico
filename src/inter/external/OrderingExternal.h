@@ -10,6 +10,7 @@
 
 #include <util/boundary/Boundary.h>
 #include <util/space/Dimension.h>
+#include <util/space/Vector.h>
 #include <util/param/ParamComposite.h>
 #include <util/global.h>
 #include <cmath>
@@ -173,17 +174,18 @@ namespace Inter
    */
    inline double OrderingExternal::energy(const Vector& position, int type) const
    {
-      Vector cellLengths = boundaryPtr_->lengths();
+      const Vector cellLengths = boundaryPtr_->lengths();
 
       double cosine = 0.0;
 
       for (int i = 0; i < nWaveVectors_; ++i) {
-         Vector q(2.0*M_PI*waveIntVectors_[i][0]/cellLengths[0], 
-                  2.0*M_PI*waveIntVectors_[i][1]/cellLengths[1], 
-                  2.0*M_PI*waveIntVectors_[i][2]/cellLengths[2]);
+         Vector q;
+         q[0] = 2.0*M_PI*waveIntVectors_[i][0]/cellLengths[0];
+         q[1] = 2.0*M_PI*waveIntVectors_[i][1]/cellLengths[1]; 
+         q[2] = 2.0*M_PI*waveIntVectors_[i][2]/cellLengths[2];
          double arg, clipParameter;
-         arg = position.q;
-         clipParameter = 1.0/( interfaceWidths_[i]*(q.cellLengths) );
+         arg = position[0]*q[0] + position[1]*q[1] + position[2]*q[2];
+         clipParameter = 1.0/( interfaceWidths_[i]*( q[0]*cellLengths[0] + q[1]*cellLengths[1] + q[2]*cellLengths[2] ) );
          cosine += clipParameter*cos(arg);
       }
       return prefactor_[type]*externalParameter_*tanh(cosine);
@@ -196,27 +198,30 @@ namespace Inter
    void OrderingExternal::getForce(const Vector& position, int type, 
                                      Vector& force) const
    {
-      Vector cellLengths = boundaryPtr_->lengths();
+      const Vector cellLengths = boundaryPtr_->lengths();
 
       double cosine = 0.0;
       Vector deriv;
       deriv.zero();
-      for (i = 0; i < nWaveVectors_; ++i) {
-         Vector q(2.0*M_PI*waveIntVectors_[i][0]/cellLengths[0],
-                  2.0*M_PI*waveIntVectors_[i][1]/cellLengths[1],
-                  2.0*M_PI*waveIntVectors_[i][2]/cellLengths[2]);
-         double arg, sine, clip_parameter;
-         arg = position.q;
-         clipParameter = 1.0/( interfaceWidths_[i]*(q.cellLengths) );
+      for (int i = 0; i < nWaveVectors_; ++i) {
+         Vector q;
+         q[0] = 2.0*M_PI*waveIntVectors_[i][0]/cellLengths[0];
+         q[1] = 2.0*M_PI*waveIntVectors_[i][1]/cellLengths[1]; 
+         q[2] = 2.0*M_PI*waveIntVectors_[i][2]/cellLengths[2];
+         double arg, sine, clipParameter;
+         arg = position[0]*q[0] + position[1]*q[1] + position[2]*q[2];
+         clipParameter = 1.0/( interfaceWidths_[i]*( q[0]*cellLengths[0] + q[1]*cellLengths[1] + q[2]*cellLengths[2] ) );
          cosine += clipParameter*cos(arg);
          sine = clipParameter*sin(arg);
-         deriv = deriv - sine*q;
+         q *= sine;
+         deriv -= q;
          cosine += clipParameter*cos(arg);
       }
       double tanH = tanh(cosine);
       double sechSq = (1.0 - tanH*tanH);
       double f = prefactor_[type]*externalParameter_*sechSq;
-      force = f*deriv;
+      deriv *= f;
+      force = deriv;
    }
  
 }
