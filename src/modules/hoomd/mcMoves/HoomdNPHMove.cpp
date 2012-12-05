@@ -106,7 +106,8 @@ namespace McMd
       integratorSPtr_->addForceCompute(pairForceSPtr_);
       integratorSPtr_->addForceCompute(bondForceSPtr_);
       #ifdef INTER_EXTERNAL
-      integratorSPtr_->addForceCompute(externalForceSPtr_);
+      if (implementExternalPotential_)
+         integratorSPtr_->addForceCompute(externalForceSPtr_);
       #endif
 
 
