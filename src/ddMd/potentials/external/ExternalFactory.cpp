@@ -17,6 +17,7 @@
 
 // External interaction classes
 #include <inter/external/TanhCosineExternal.h>
+#include <inter/external/OrderingExternal.h>
 
 namespace DdMd
 {
@@ -46,6 +47,10 @@ namespace DdMd
       if (name == "TanhCosineExternal") {
          ptr = new ExternalPotentialImpl<TanhCosineExternal>(*simulationPtr_);
       } 
+      if (name == "OrderingExternal") {
+         ptr = new ExternalPotentialImpl<OrderingExternal>(*simulationPtr_);
+      }
+
       return ptr;
    }
 
