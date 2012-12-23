@@ -160,11 +160,12 @@ namespace McMd
       ArrayHandle<Scalar4> h_vel(particleDataSPtr_->getVelocities(), access_location::host, access_mode::readwrite);
       ArrayHandle<unsigned int> h_tag(particleDataSPtr_->getTags(), access_location::host, access_mode::readwrite);
       ArrayHandle<unsigned int> h_rtag(particleDataSPtr_->getRTags(), access_location::host, access_mode::readwrite);
-
+      int nind = 0;
       for (int iSpec =0; iSpec < nSpec; ++iSpec) {
          system().begin(iSpec, molIter);
          for ( ; molIter.notEnd(); ++ molIter) {
             for (molIter->begin(atomIter); atomIter.notEnd(); ++atomIter) {
+               nind = nind + 1;
                unsigned int idx = (unsigned int) atomIter->id();
                Vector& pos = atomIter->position();
                h_pos.data[idx].x = pos[0] - lengths_[0]/2.;
@@ -176,6 +177,13 @@ namespace McMd
                h_pos.data[idx].w = __int_as_scalar(type);
                h_tag.data[idx] = idx;
                h_rtag.data[idx] = idx; 
+               /*
+               if(nind == 1) {
+                  std::cout << " index is " << atomIter->id() << std::endl;
+                  std::cout << "position is " << pos << std::endl;
+                  std::cout << "lengths is " << lengths_ << std::endl;
+                  std::cout << "hpos is " << h_pos.data[idx].x << "  " << h_pos.data[idx].y << " " << h_pos.data[idx].z << std::endl;
+               }*/
             }
          }
       }
@@ -238,6 +246,7 @@ namespace McMd
       // Integrate nStep_ steps forward
       for (int iStep = 0; iStep < nStep_; ++iStep) {
          integratorSPtr_->update(iStep);
+         //std::cout << "energy at iStep is " << externalForceSPtr_->getLogValue("external_periodic_energy", iStep) << std::endl; 
 
          // do we need to sort the particles?
          // do not sort at time step 0 to speed up short runs
@@ -272,12 +281,7 @@ namespace McMd
          if (!setConstrain_) {
             double  newAspectRatio, aspectRatioParam;
             newAspectRatio = double(newLengths[0]/newLengths[1]);
-            if ( newAspectRatio >= 1.0 ) {
-               aspectRatioParam = newAspectRatio;
-            } else {
-               aspectRatioParam = 1.0/newAspectRatio;
-            }
-            if ( aspectRatioParam > 3.0 ) {
+            if ( newAspectRatio > 1.4 || newAspectRatio < 0.8) {
                accept = false;
             } else {
                accept = random.metropolis( boltzmann(newH-oldH) );
@@ -316,15 +320,20 @@ namespace McMd
          ArrayHandle<Scalar4> h_vel(particleDataSPtr_->getVelocities(), access_location::host, access_mode::read);
          ArrayHandle<unsigned int> h_tag(particleDataSPtr_->getTags(), access_location::host, access_mode::read);
          ArrayHandle<unsigned int> h_rtag(particleDataSPtr_->getRTags(), access_location::host, access_mode::read);
-         
+         //int nind = 0; 
          for (int iSpec = 0; iSpec < nSpec; ++iSpec) {
             system().begin(iSpec, molIter);
             for ( ; molIter.notEnd(); ++molIter) {
                for (molIter->begin(atomIter); atomIter.notEnd(); ++atomIter) {
+                  //nind = nind + 1;
                   unsigned int idx = h_rtag.data[atomIter->id()]; 
                   atomIter->position() = Vector(h_pos.data[idx].x+lengths_[0]/2.,
                                                 h_pos.data[idx].y+lengths_[1]/2.,
                                                 h_pos.data[idx].z+lengths_[2]/2.);
+                  //if(nind == 85408) {
+                    // std::cout << "accept hpos is " << h_pos.data[idx].x << std::endl;
+                    // std::cout << "accept position is " << atomIter->position() << std::endl;
+                  //}
                }
             }
          }
@@ -333,6 +342,23 @@ namespace McMd
          incrementNAccept();
       } else {
           // not accepted, do nothing
+         // read back integrated positions
+         int nind = 0;
+         for (int iSpec = 0; iSpec < nSpec; ++iSpec) {
+            system().begin(iSpec, molIter);
+            for ( ; molIter.notEnd(); ++molIter) {
+               for (molIter->begin(atomIter); atomIter.notEnd(); ++atomIter) {
+                  nind = nind + 1;
+                  /*
+                  if(nind == 1) {
+                     std::cout << "reject index is " << atomIter->id() << std::endl;
+                     std::cout << "reject position is " << atomIter->position() << std::endl;
+                     std::cout << "lengths is " << lengths_ << std::endl;
+                  }*/
+               }
+            }
+         }
+
       }
 
 //      std::cout << "Lx = " << lengths_[0] << " Ly = " << lengths_[1] << " Lz = " << lengths_[2] << std::endl;

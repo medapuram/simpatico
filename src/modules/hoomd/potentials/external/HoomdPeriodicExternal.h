@@ -79,7 +79,6 @@ namespace McMd
 
       /// Number of periods in a cell
       int periodicity_;
-
    };
   
 }
