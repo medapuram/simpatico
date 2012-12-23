@@ -22,6 +22,7 @@
 #include <inter/external/OrthoBoxExternal.h>
 #include <inter/external/SlitExternal.h>
 #include <inter/external/TanhCosineExternal.h>
+#include <inter/external/OrderingExternal.h>
 
 namespace McMd
 {
@@ -56,6 +57,9 @@ namespace McMd
       } else
       if (name == "TanhCosineExternal") {
          ptr = new ExternalPotentialImpl<TanhCosineExternal>(*systemPtr_);
+      } else
+      if (name == "OrderingExternal") {
+         ptr = new ExternalPotentialImpl<OrderingExternal>(*systemPtr_);
       }
       return ptr;
    }

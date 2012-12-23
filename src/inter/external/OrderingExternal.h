@@ -1,5 +1,5 @@
-#ifndef TANH_COSINE_EXTERNAL_H
-#define TANH_COSINE_EXTERNAL_H
+#ifndef INTER_ORDERING_EXTERNAL_H
+#define INTER_ORDERING_EXTERNAL_H
 
 /*
 * Simpatico - Simulation Package for Polymeric and Molecular Liquids
@@ -10,6 +10,7 @@
 
 #include <util/boundary/Boundary.h>
 #include <util/space/Dimension.h>
+#include <util/space/Vector.h>
 #include <util/param/ParamComposite.h>
 #include <util/global.h>
 #include <cmath>
@@ -36,7 +37,7 @@ namespace Inter
    *
    * \ingroup Inter_External_Module
    */
-   class TanhCosineExternal : public ParamComposite 
+   class OrderingExternal : public ParamComposite 
    {
    
    public:
@@ -44,17 +45,17 @@ namespace Inter
       /**
       * Default constructor.
       */
-      TanhCosineExternal();
+      OrderingExternal();
 
       /**
       * Copy constructor.
       */
-      TanhCosineExternal(const TanhCosineExternal& other);
+      OrderingExternal(const OrderingExternal& other);
 
       /**
       * Assignment.
       */
-      TanhCosineExternal& operator = (const TanhCosineExternal& other);
+      OrderingExternal& operator = (const OrderingExternal& other);
 
       /**  
       * Set nAtomType value.
@@ -101,7 +102,7 @@ namespace Inter
       * \param i  type of particle (prefactor depends on atomtype)
       * \return   external potential energy
       */
-      double energy(double d, int i) const;
+      //double energy(double d, int i) const;
  
       /**
       * Returns external potential energy of a single particle. 
@@ -119,7 +120,7 @@ namespace Inter
       * \param type atom type id (not used)
       * \return    force scalar
       */
-      double forceScalar(double d, int type) const;
+      //double forceScalar(double d, int type) const;
  
       /**
       * Returns force caused by the external potential.
@@ -131,7 +132,7 @@ namespace Inter
       void getForce(const Vector& position, int type, Vector& force) const;
  
       /**
-      * Return name string "TanhCosineExternal".
+      * Return name string "OrderingExternal".
       */
       std::string className() const;
  
@@ -140,20 +141,20 @@ namespace Inter
       /// Maximum allowed value for nAtomType (# of particle types).
       static const int MaxAtomType = 2;
 
-      /// Index representing the direction perpendicular to the lamellae.
-      int perpDirection_;
-
-      /// Interfcial width in lamellar phase.
-      double width_;
-
       /// Prefactor array ofsize nAtomType.
-      DArray<double> prefactor_;   
+      DArray<double> prefactor_;
 
       /// External parameter.
       double externalParameter_;
 
-      /// Number of periods in a cell
-      int periodicity_;
+      /// Number of reciprocal lattice vectors
+      int  nWaveVectors_;
+
+      /// Array of Miller index IntVectors for the reciprocal lattice vectors.
+      DArray<IntVector>  waveIntVectors_;
+
+      /// Interface widths array ofsize nWaveVectors
+      DArray<double> interfaceWidths_;
 
       /// Pointer to associated Boundary object.
       Boundary *boundaryPtr_;
@@ -167,68 +168,60 @@ namespace Inter
    };
   
    // inline methods 
- 
-    
-   inline double TanhCosineExternal::energy(double d, int type) const
-   {
-      double perpLength, q, clipParameter, arg, clipcos;
-      Vector lengths;
-      lengths = boundaryPtr_->lengths();
-      perpLength = lengths[perpDirection_];
-      q = 2.0*M_PI*periodicity_/perpLength;
-      clipParameter = 1.0/(q*width_*perpLength);
 
-      arg = q*d;
-      clipcos = clipParameter*cos(arg);
-      
-      return prefactor_[type]*externalParameter_*tanh(clipcos);
-   }
-   
    /* 
    * Calculate external potential energy for a single atom.
    */
-   inline 
-   double TanhCosineExternal::energy(const Vector& position, int type) const
+   inline double OrderingExternal::energy(const Vector& position, int type) const
    {
-      double d, totalEnergy;
-      totalEnergy = 0.0;
-      d = position[perpDirection_];
-      totalEnergy += energy(d, type);
-       
-      return totalEnergy;
-   }
-  
-   /* 
-   * Calculate force for a particle as a function of distance to boundary.
-   */
-   inline double TanhCosineExternal::forceScalar(double d, int type) const
-   {
-      double perpLength, q, clipParameter, arg, clipcos, tanH, sechSq;
-      Vector lengths;
-      lengths = boundaryPtr_->lengths();
-      perpLength = lengths[perpDirection_];
-      q = 2.0*M_PI*periodicity_/perpLength;
-      clipParameter = 1.0/(q*width_*perpLength);
-      arg = q*d;
-      clipcos = clipParameter*cos(arg);
-      tanH = tanh(clipcos);
-      sechSq = (1.0 - tanH*tanH);
-      return prefactor_[type]*externalParameter_*sechSq*clipParameter*sin(arg)*q;
+      const Vector cellLengths = boundaryPtr_->lengths();
+
+      double cosine = 0.0;
+
+      for (int i = 0; i < nWaveVectors_; ++i) {
+         Vector q;
+         q[0] = 2.0*M_PI*waveIntVectors_[i][0]/cellLengths[0];
+         q[1] = 2.0*M_PI*waveIntVectors_[i][1]/cellLengths[1]; 
+         q[2] = 2.0*M_PI*waveIntVectors_[i][2]/cellLengths[2];
+         double arg, clipParameter;
+         arg = position[0]*q[0] + position[1]*q[1] + position[2]*q[2];
+         clipParameter = 1.0/( interfaceWidths_[i]*( q[0]*cellLengths[0] + q[1]*cellLengths[1] + q[2]*cellLengths[2] ) );
+         cosine += clipParameter*cos(arg);
+      }
+      return prefactor_[type]*externalParameter_*tanh(cosine);
    }
 
    /* 
    * Calculate external force for a single atom.
    */
    inline 
-   void TanhCosineExternal::getForce(const Vector& position, int type, 
+   void OrderingExternal::getForce(const Vector& position, int type, 
                                      Vector& force) const
    {
-      double d = position[perpDirection_];
-      double scalarf;
-      force.zero();
-      scalarf = forceScalar(d, type);
-      force[perpDirection_] = scalarf;
-      
+      const Vector cellLengths = boundaryPtr_->lengths();
+
+      double cosine = 0.0;
+      Vector deriv;
+      deriv.zero();
+      for (int i = 0; i < nWaveVectors_; ++i) {
+         Vector q;
+         q[0] = 2.0*M_PI*waveIntVectors_[i][0]/cellLengths[0];
+         q[1] = 2.0*M_PI*waveIntVectors_[i][1]/cellLengths[1]; 
+         q[2] = 2.0*M_PI*waveIntVectors_[i][2]/cellLengths[2];
+         double arg, sine, clipParameter;
+         arg = position[0]*q[0] + position[1]*q[1] + position[2]*q[2];
+         clipParameter = 1.0/( interfaceWidths_[i]*( q[0]*cellLengths[0] + q[1]*cellLengths[1] + q[2]*cellLengths[2] ) );
+         cosine += clipParameter*cos(arg);
+         sine = clipParameter*sin(arg);
+         q *= sine;
+         deriv -= q;
+         cosine += clipParameter*cos(arg);
+      }
+      double tanH = tanh(cosine);
+      double sechSq = (1.0 - tanH*tanH);
+      double f = prefactor_[type]*externalParameter_*sechSq;
+      deriv *= f;
+      force = deriv;
    }
  
 }

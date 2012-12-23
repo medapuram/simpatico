@@ -238,6 +238,7 @@ namespace McMd
       * Does an external potential exist?
       */
       int hasExternal() const;
+      int implementExternal() const;
       #endif
 
       #ifdef INTER_TETHER
@@ -528,6 +529,7 @@ namespace McMd
       #ifdef INTER_EXTERNAL
       /// Does an external potential exist? (0 false or 1 true)
       int  hasExternal_;
+      int  implementExternal_;
       #endif
 
       #ifdef INTER_TETHER
@@ -659,6 +661,8 @@ namespace McMd
    #ifdef INTER_EXTERNAL
    inline int Simulation::hasExternal() const
    {  return hasExternal_; }
+   inline int Simulation::implementExternal() const
+   {  return implementExternal_; }
    #endif
 
    #ifdef INTER_TETHER

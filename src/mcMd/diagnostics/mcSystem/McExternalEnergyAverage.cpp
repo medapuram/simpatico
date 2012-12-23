@@ -80,12 +80,11 @@ namespace McMd
            for (system().begin(iSpec, molIter); molIter.notEnd(); ++molIter){
                 for (molIter->begin(atomIter); atomIter.notEnd(); ++atomIter) {
                     energy += system().externalPotential().energy(atomIter->position(), atomIter->typeId());
-
                 }
            }
       }
 
-      accumulator_.sample(-1.0*energy, outputFile_);
+      accumulator_.sample(energy, outputFile_);
    }
 
    /*
