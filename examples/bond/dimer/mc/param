@@ -52,7 +52,7 @@ McSimulation{
 
     HybridMdMove{
       probability           0.002000000000e+00
-      nStep                                 20
+      nStep                                200
       MdSystem{
         MdPairPotential{
           maxBoundary             cubic  10.5 
@@ -63,7 +63,7 @@ McSimulation{
           }
         }
         NveVvIntegrator{
-          dt                    1.000000000000e-02
+          dt                    2.000000000000e-02
         }
       }
     }
@@ -74,6 +74,11 @@ McSimulation{
 
     LogProgress{
       interval                        500000
+    }
+
+    McWriteRestart{
+      interval                         10000
+      outputFileName                 restart
     }
 
     McEnergyAverage{
@@ -99,10 +104,8 @@ McSimulation{
     RDF{
       interval                        100000
       outputFileName                     RDF
-      RadialDistribution{
-         max                             5.0
-         nBin                            500
-      }
+      max                                5.0
+      nBin                               500
       selector                         inter   -1    -1
     }
 

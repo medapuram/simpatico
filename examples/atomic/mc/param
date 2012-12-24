@@ -50,7 +50,7 @@ McSimulation{
 
     HybridMdMove{
       probability           0.001000000000e+00
-      nStep                                 10
+      nStep                                 50
       MdSystem{
         MdPairPotential{
           maxBoundary             cubic  10.5 
@@ -72,6 +72,11 @@ McSimulation{
 
     LogProgress{
       interval                        100000
+    }
+
+    McWriteRestart{
+      interval                        500000
+      outputFileName                 restart
     }
 
     McEnergyAverage{
@@ -97,20 +102,15 @@ McSimulation{
     RDF{
       interval                        100000
       outputFileName                     RDF
-      RadialDistribution{
-         max                             5.0
-         nBin                            500
-      }
+      max                                5.0
+      nBin                               500
       selector                         inter   -1    -1
     }
 
   }
 }
-WRITE_PARAM      param
-READ_CONFIG      config
-SIMULATE        2000000
-WRITE_CONFIG     config
-FINISH
+
+---------------------------------------------------------
 
     DumpConfig{
       interval                         10000

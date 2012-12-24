@@ -19,11 +19,19 @@ namespace McMd
    */
    class McPressureAverage : public PressureAverage<McSystem>
    {
-   
    public:
 
-      /// Constructor.
+      /**
+      * Constructor.
+      *
+      * \param system parent McSystem
+      */
       McPressureAverage(McSystem& system);
+
+      /**
+      * Destructor.
+      */
+      ~McPressureAverage();
 
    };
 

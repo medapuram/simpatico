@@ -70,8 +70,13 @@ namespace McMd
       */
       void setOptions(int argc, char **argv);
 
-      using ParamComposite::readParam;
-
+      /**
+      * Read parameter file.
+      *
+      * \param in parameter file stream
+      */
+      virtual void readParam(std::istream &in);
+   
       /**
       * Read parameters from the default parameter stream.
       *
@@ -87,6 +92,20 @@ namespace McMd
       * \param in parameter file input stream.
       */
       virtual void readParameters(std::istream &in);
+
+      /**
+      * Load internal state from an archive.
+      *
+      * \param ar input/loading archive
+      */
+      virtual void loadParameters(Serializable::IArchive &ar);
+
+      /**
+      * Save internal state to an archive.
+      *
+      * \param ar output/saving archive
+      */
+      virtual void save(Serializable::OArchive &ar);
 
       /**
       * Read and execute commands from a specific input stream.

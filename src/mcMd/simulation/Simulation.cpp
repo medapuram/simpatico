@@ -169,7 +169,7 @@ namespace McMd
    * Set an MPI job to read a single parameter file, from std::cin.
    */
    void Simulation::setParamCommunicator()
-   {  Simulation::setParamCommunicator(*communicatorPtr_); }
+   {  Simulation::setParamCommunicator(communicator()); }
    #endif
 
    /*
@@ -223,7 +223,6 @@ namespace McMd
       }
       #endif
 
-
       #ifndef MCMD_NOATOMTYPES
       // Allocate and read an array of AtomType objects
       atomTypes_.allocate(nAtomType_);
@@ -236,11 +235,89 @@ namespace McMd
       read<MaskPolicy>(in, "maskedPairPolicy", maskedPairPolicy_);
 
       readParamComposite(in, *speciesManagerPtr_);
+      for (int iSpecies = 0; iSpecies < nSpecies(); ++iSpecies) {
+         species(iSpecies).setId(iSpecies);
+      }
+
       readParamComposite(in, random_);
 
       // Allocate and initialize all private arrays.
       initialize();
 
+   }
+
+   /*
+   * Load internal state from an archive.
+   */
+   void Simulation::loadParameters(Serializable::IArchive &ar)
+   {
+      loadParamComposite(ar, fileMaster_);
+
+      loadParameter<int>(ar, "nAtomType", nAtomType_);
+      loadParameter<int>(ar, "nBondType", nBondType_);
+      #ifdef INTER_ANGLE
+      loadParameter<int>(ar, "nAngleType", nAngleType_);
+      #endif
+      #ifdef INTER_DIHEDRAL
+      loadParameter<int>(ar, "nDihedralType", nDihedralType_);
+      #endif
+      #ifdef MCMD_LINK
+      loadParameter<int>(ar, "nLinkType", nLinkType_);
+      #endif
+      #ifdef INTER_EXTERNAL
+      loadParameter<int>(ar, "hasExternal", hasExternal_);
+      #endif
+      #ifdef INTER_TETHER
+      loadParameter<int>(ar, "hasTether", hasTether_);
+      #endif
+      #ifndef MCMD_NOATOMTYPES
+      // Allocate and load an array of AtomType objects
+      atomTypes_.allocate(nAtomType_);
+      for (int i = 0; i < nAtomType_; ++i) {
+         atomTypes_[i].setId(i);
+      }
+      loadDArray<AtomType>(ar, "atomTypes", atomTypes_, nAtomType_);
+      #endif
+      loadParameter<MaskPolicy>(ar, "maskedPairPolicy", maskedPairPolicy_);
+      loadParamComposite(ar, *speciesManagerPtr_);
+      for (int iSpecies = 0; iSpecies < nSpecies(); ++iSpecies) {
+         species(iSpecies).setId(iSpecies);
+      }
+      loadParamComposite(ar, random_);
+
+      // Allocate and initialize all private arrays.
+      initialize();
+   }
+
+   /*
+   * Load internal state from an archive.
+   */
+   void Simulation::save(Serializable::OArchive &ar)
+   {
+      fileMaster_.save(ar);
+      ar << nAtomType_;
+      ar << nBondType_;
+      #ifdef INTER_ANGLE
+      ar << nAngleType_;
+      #endif
+      #ifdef INTER_DIHEDRAL
+      ar << nDihedralType_;
+      #endif
+      #ifdef MCMD_LINK
+      ar << nLinkType_;
+      #endif
+      #ifdef INTER_EXTERNAL
+      ar << hasExternal_;
+      #endif
+      #ifdef INTER_TETHER
+      ar << hasTether_;
+      #endif
+      #ifndef MCMD_NOATOMTYPES
+      ar << atomTypes_;
+      #endif
+      ar & maskedPairPolicy_;
+      (*speciesManagerPtr_).save(ar);
+      random_.save(ar);
    }
 
    /*
@@ -309,8 +386,11 @@ namespace McMd
       for (iSpecies = 0; iSpecies < nSpecies(); ++iSpecies) {
          speciesPtr = &species(iSpecies);
 
-         // Set id for Species object
-         speciesPtr->setId(iSpecies);
+         // Check species id
+         if (speciesPtr->id() != iSpecies) {
+            UTIL_THROW("Inconsistent species ids");
+         }
+         //speciesPtr->setId(iSpecies);
 
          // Set indexes of first objects of the blocks for this species
          firstMoleculeIds_[iSpecies] = moleculeCapacity_;

@@ -81,6 +81,11 @@ McSimulation{
       interval                          2000
     }
 
+    McWriteRestart{
+      interval                         10000
+      outputFileName                 restart
+    }
+
     McEnergyOutput{
       interval                           200
       outputFileName                  energy
@@ -106,6 +111,30 @@ McSimulation{
       speciesId                            0
     }
 
+    StructureFactor{
+      interval                           100
+      outputFileName         StructureFactor
+      nMode                                2
+      modes                       1.0   -1.0
+                                  1.0    1.0 
+      nWave                                5
+      waveIntVectors              1    0   0
+                                  2    0   0
+                                  3    0   0
+                                  4    0   0
+                                  5    0   0
+    }
+
+    StructureFactorGrid{
+      interval                          1000
+      outputFileName     StructureFactorGrid
+      nMode                                2
+      modes                       1.0   -1.0
+                                  1.0    1.0 
+      hMax                                 5
+      lattice                          Cubic
+    }
+
     StructureFactorPGrid{
       interval                          1000
       outputFileName    StructureFactorPGrid
@@ -115,6 +144,39 @@ McSimulation{
       hMax                                 4
       lattice                          Cubic
     }
+    VanHove{
+      interval                           100
+      outputFileName                 VanHove
+      atomTypeCoeffs              1.0   -1.0
+      nBuffer                             20
+      nWave                                5
+      waveIntVectors              1    0   0
+                                  2    0   0
+                                  3    0   0
+                                  4    0   0
+                                  5    0   0
+    }
+  }
+
+}
+
+------------------------------------------------------------
+
+    DumpConfig{
+      interval                         10000
+      outputFileName            dump/config.
+    }
+
+    RDF{
+      interval                          1000
+      outputFileName                     RDF
+      RadialDistribution{
+         max                             5.0
+         nBin                            500
+      }
+      selector                         inter   -1    -1
+    }
+
 
     StructureFactorP{
       interval                           100
@@ -155,60 +217,5 @@ McSimulation{
                                  29    0   0
                                  30    0   0
       
-    }
-
-    StructureFactorGrid{
-      interval                          1000
-      outputFileName     StructureFactorGrid
-      nMode                                2
-      modes                       1.0   -1.0
-                                  1.0    1.0 
-      hMax                                 5
-      lattice                          Cubic
-    }
-
-    StructureFactor{
-      interval                           100
-      outputFileName         StructureFactor
-      nMode                                2
-      modes                       1.0   -1.0
-                                  1.0    1.0 
-      nWave                                5
-      waveIntVectors              1    0   0
-                                  2    0   0
-                                  3    0   0
-                                  4    0   0
-                                  5    0   0
-    }
-
-    VanHove{
-      interval                           100
-      outputFileName                 VanHove
-      atomTypeCoeffs                1.0 -1.0
-      nBuffer                             20
-      nWave                                5
-      waveIntVectors              1    0   0
-                                  2    0   0
-                                  3    0   0
-                                  4    0   0
-                                  5    0   0
-    }
-  }
-
-}
-
-    DumpConfig{
-      interval                         10000
-      outputFileName            dump/config.
-    }
-
-    RDF{
-      interval                          1000
-      outputFileName                     RDF
-      RadialDistribution{
-         max                             5.0
-         nBin                            500
-      }
-      selector                         inter   -1    -1
     }
 

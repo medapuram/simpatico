@@ -59,7 +59,7 @@ MdSimulation{
 
     MdWriteRestart{
       interval                         10000
-      fileName                       restart
+      outputFileName                 restart
     }
 
     MdEnergyOutput{
@@ -67,15 +67,15 @@ MdSimulation{
       outputFileName                  energy
     }
 
-    MdPotentialEnergyAverage{
-      interval                           200
-      outputFileName      potentialEnergyAve
-      nSamplePerBlock                     10
-    }
-
     MdKineticEnergyAverage{
       interval                           200
       outputFileName        kineticEnergyAve
+      nSamplePerBlock                     10
+    }
+
+    MdPotentialEnergyAverage{
+      interval                           200
+      outputFileName      potentialEnergyAve
       nSamplePerBlock                     10
     }
 
@@ -86,25 +86,21 @@ MdSimulation{
       speciesId                            0
     }
 
+    BondLengthDist{
+      interval                          1000
+      outputFileName          BondLengthDist
+      speciesId                            0
+      min                                0.0
+      max                                2.0
+      nBin                               400
+    }
+
     RDF{
       interval                         10000
       outputFileName                     RDF
-      RadialDistribution{
-         max                             5.0
-         nBin                            500
-      }
+      max                                5.0
+      nBin                               500
       selector                         inter   -1    -1
-    }
-
-    BondLengthDist{
-      interval                           1000
-      outputFileName          BondLengthDist
-      speciesId                            0
-      Distribution{
-         min                             0.0
-         max                             2.0
-         nBin                            400
-      }
     }
 
     AtomMSD{

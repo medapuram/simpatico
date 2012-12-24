@@ -1,5 +1,5 @@
-#ifndef CARRAY_2D_PARAM_H
-#define CARRAY_2D_PARAM_H
+#ifndef UTIL_CARRAY_2D_PARAM_H
+#define UTIL_CARRAY_2D_PARAM_H
 
 /*
 * Simpatico - Simulation Package for Polymeric and Molecular Liquids
@@ -58,6 +58,20 @@ namespace Util
       * Write 2D C array to file.
       */ 
       void writeParam(std::ostream &out);
+
+      /**
+      * Load 2D C array from archive.
+      *
+      * \param ar loading (input) archive.
+      */
+      void load(Serializable::IArchive& ar);
+
+      /**
+      * Save 2D C array to an archive.
+      *
+      * \param ar saving (output) archive.
+      */
+      void save(Serializable::OArchive& ar);
 
    protected:
    
@@ -131,6 +145,44 @@ namespace Util
                 << value_[i*n_ + j];
          }
          out << std::endl;
+      }
+   }
+
+   /*
+   * Load from an archive.
+   */
+   template <class Type>
+   void CArray2DParam<Type>::load(Serializable::IArchive& ar)
+   {
+      if (isParamIoProcessor()) {
+         int i, j; 
+         for (i = 0; i < m_; ++i) {
+            for (j = 0; j < n_; ++j) {
+               ar >> value_[i*n_ + j];
+            }
+         }
+         if (ParamComponent::echo()) {
+            writeParam(Log::file());
+         }
+      }
+      #ifdef UTIL_MPI
+      if (hasParamCommunicator()) {
+         bcast<Type>(paramCommunicator(), value_, n_*m_, 0); 
+      }
+      #endif
+   }
+
+   /*
+   * Save to an archive.
+   */
+   template <class Type>
+   void CArray2DParam<Type>::save(Serializable::OArchive& ar)
+   {
+      int i, j;
+      for (i = 0; i < m_; ++i) {
+         for (j = 0; j < n_; ++j) {
+            ar << value_[i*n_ + j];
+         }
       }
    }
 
