@@ -153,8 +153,11 @@ namespace Inter
       /// Array of Miller index IntVectors for the reciprocal lattice vectors.
       DArray<IntVector>  waveIntVectors_;
 
-      /// Interface widths array ofsize nWaveVectors
-      DArray<double> interfaceWidths_;
+      /// Number of unit cells in box
+      int periodicity_;
+
+      /// Interface width
+      double interfaceWidth_;
 
       /// Pointer to associated Boundary object.
       Boundary *boundaryPtr_;
@@ -175,19 +178,19 @@ namespace Inter
    inline double OrderingExternal::energy(const Vector& position, int type) const
    {
       const Vector cellLengths = boundaryPtr_->lengths();
+      double clipParameter = 1.0/(2.0*M_PI*periodicity_*interfaceWidth_);
 
       double cosine = 0.0;
-
       for (int i = 0; i < nWaveVectors_; ++i) {
          Vector q;
          q[0] = 2.0*M_PI*waveIntVectors_[i][0]/cellLengths[0];
          q[1] = 2.0*M_PI*waveIntVectors_[i][1]/cellLengths[1]; 
          q[2] = 2.0*M_PI*waveIntVectors_[i][2]/cellLengths[2];
-         double arg, clipParameter;
-         arg = position[0]*q[0] + position[1]*q[1] + position[2]*q[2];
-         clipParameter = 1.0/( interfaceWidths_[i]*( q[0]*cellLengths[0] + q[1]*cellLengths[1] + q[2]*cellLengths[2] ) );
-         cosine += clipParameter*cos(arg);
+         double arg;
+         arg = q.dot(position);
+         cosine += cos(arg);
       }
+      cosine *= clipParameter;
       return prefactor_[type]*externalParameter_*tanh(cosine);
    }
 
@@ -199,6 +202,7 @@ namespace Inter
                                      Vector& force) const
    {
       const Vector cellLengths = boundaryPtr_->lengths();
+      double clipParameter = 1.0/(2.0*M_PI*periodicity_*interfaceWidth_);
 
       double cosine = 0.0;
       Vector deriv;
@@ -208,15 +212,15 @@ namespace Inter
          q[0] = 2.0*M_PI*waveIntVectors_[i][0]/cellLengths[0];
          q[1] = 2.0*M_PI*waveIntVectors_[i][1]/cellLengths[1]; 
          q[2] = 2.0*M_PI*waveIntVectors_[i][2]/cellLengths[2];
-         double arg, sine, clipParameter;
-         arg = position[0]*q[0] + position[1]*q[1] + position[2]*q[2];
-         clipParameter = 1.0/( interfaceWidths_[i]*( q[0]*cellLengths[0] + q[1]*cellLengths[1] + q[2]*cellLengths[2] ) );
-         cosine += clipParameter*cos(arg);
-         sine = clipParameter*sin(arg);
+         double arg, sine;
+         arg = q.dot(position);
+         cosine += cos(arg);
+         sine = -1.0*sin(arg);
          q *= sine;
-         deriv -= q;
-         cosine += clipParameter*cos(arg);
+         deriv += q;
       }
+      cosine *= clipParameter;
+      deriv *= clipParameter;
       double tanH = tanh(cosine);
       double sechSq = (1.0 - tanH*tanH);
       double f = prefactor_[type]*externalParameter_*sechSq;

@@ -23,6 +23,8 @@ namespace Inter
    OrderingExternal::OrderingExternal() 
     : externalParameter_(),
       nWaveVectors_(),
+      periodicity_(),
+      interfaceWidth_(),
       boundaryPtr_(0),
       nAtomType_(0), 
       isInitialized_(false)
@@ -34,6 +36,8 @@ namespace Inter
    OrderingExternal::OrderingExternal(const OrderingExternal& other)
     : externalParameter_(other.externalParameter_),
       nWaveVectors_(other.nWaveVectors_),
+      periodicity_(other.periodicity_),
+      interfaceWidth_(other.interfaceWidth_),
       boundaryPtr_(other.boundaryPtr_),
       nAtomType_(other.nAtomType_),
       isInitialized_(other.isInitialized_)
@@ -48,9 +52,6 @@ namespace Inter
           waveIntVectors_[i][j] = other.waveIntVectors_[i][j];
         }
       }
-      for (int i=0; i < nWaveVectors_; ++i) {
-        interfaceWidths_[i] = other.interfaceWidths_[i];
-      }
    } 
      
    /* 
@@ -60,6 +61,8 @@ namespace Inter
    {
       externalParameter_   = other.externalParameter_;
       nWaveVectors_        = other.nWaveVectors_;
+      periodicity_         = other.periodicity_;
+      interfaceWidth_      = other.interfaceWidth_;
       boundaryPtr_         = other.boundaryPtr_;
       nAtomType_           = other.nAtomType_;
       isInitialized_       = other.isInitialized_;
@@ -70,9 +73,6 @@ namespace Inter
         for (int i=0; i < nWaveVectors_; ++i) {
           waveIntVectors_[i][j] = other.waveIntVectors_[i][j];
         }
-      }
-      for (int i=0; i < nWaveVectors_; ++i) {
-        interfaceWidths_[i] = other.interfaceWidths_[i];
       }
       return *this;
    }
@@ -130,8 +130,8 @@ namespace Inter
       waveIntVectors_.allocate(nWaveVectors_);
       readDArray<IntVector>(in, "waveIntVectors", waveIntVectors_, nWaveVectors_);
       
-      interfaceWidths_.allocate(nWaveVectors_);
-      readDArray<double>(in, "interfaceWidths", interfaceWidths_, nWaveVectors_);
+      read<double>(in, "interfaceWidth", interfaceWidth_);
+      read<int>(in, "periodicity", periodicity_);
 
       isInitialized_ = true;
    }
