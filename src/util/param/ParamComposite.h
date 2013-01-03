@@ -1,5 +1,5 @@
-#ifndef PARAM_COMPOSITE_H
-#define PARAM_COMPOSITE_H
+#ifndef UTIL_PARAM_COMPOSITE_H
+#define UTIL_PARAM_COMPOSITE_H
 
 /*
 * Simpatico - Simulation Package for Polymeric and Molecular Liquids
@@ -422,9 +422,10 @@ namespace Util
       isLeaf_.push_back(true);
       ++size_;
       ptr->setIndent(*this);
-      #ifdef UTIL_MPI
-      if (hasParamCommunicator()) 
+      #ifdef UTIL_MPI 
+      if (hasParamCommunicator()) {
          ptr->setParamCommunicator(paramCommunicator());
+      }
       #endif
       return *ptr;
    }
@@ -456,8 +457,9 @@ namespace Util
       ++size_;
       ptr->setIndent(*this);
       #ifdef UTIL_MPI
-         if (hasParamCommunicator()) 
-            ptr->setParamCommunicator(paramCommunicator());
+      if (hasParamCommunicator()) {
+         ptr->setParamCommunicator(paramCommunicator());
+      }
       #endif
       return *ptr;
    }
@@ -490,8 +492,9 @@ namespace Util
       ++size_;
       ptr->setIndent(*this);
       #ifdef UTIL_MPI
-         if (hasParamCommunicator()) 
-            ptr->setParamCommunicator(paramCommunicator());
+      if (hasParamCommunicator()) {
+         ptr->setParamCommunicator(paramCommunicator());
+      }
       #endif
       return *ptr;
    }
@@ -524,8 +527,9 @@ namespace Util
       ++size_;
       ptr->setIndent(*this);
       #ifdef UTIL_MPI
-      if (hasParamCommunicator()) 
+      if (hasParamCommunicator()) {
          ptr->setParamCommunicator(paramCommunicator());
+      }
       #endif
       return *ptr;
    }
@@ -558,8 +562,9 @@ namespace Util
       ++size_;
       ptr->setIndent(*this);
       #ifdef UTIL_MPI
-      if (hasParamCommunicator()) 
+      if (hasParamCommunicator()) {
          ptr->setParamCommunicator(paramCommunicator());
+      }
       #endif
       return *ptr;
    }
@@ -592,8 +597,9 @@ namespace Util
       ++size_;
       ptr->setIndent(*this);
       #ifdef UTIL_MPI
-      if (hasParamCommunicator()) 
+      if (hasParamCommunicator()) {
          ptr->setParamCommunicator(paramCommunicator());
+      }
       #endif
       return *ptr;
    }

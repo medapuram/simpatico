@@ -1,5 +1,5 @@
-#ifndef HARMONIC_L0_BOND_H
-#define HARMONIC_L0_BOND_H
+#ifndef INTER_HARMONIC_L0_BOND_H
+#define INTER_HARMONIC_L0_BOND_H
 
 /*
 * Simpatico - Simulation Package for Polymeric and Molecular Liquids
@@ -112,7 +112,7 @@ namespace Inter
       /**
       * Returns bond stiffness
       */
-      double stiffness(unsigned int bondType) const;
+      double stiffness(int bondType) const;
 
       /**
       * Get a parameter value, identified by a string.
@@ -137,7 +137,7 @@ namespace Inter
    /*
     * Return bond stiffness
     */
-   inline double HarmonicL0Bond::stiffness(unsigned int bondType) const
+   inline double HarmonicL0Bond::stiffness(int bondType) const
    {
       assert(bondType < nBondType_);
       return kappa_[bondType];

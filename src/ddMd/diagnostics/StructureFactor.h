@@ -106,7 +106,7 @@ namespace DdMd
       /** 
       * Clear accumulators.
       */
-      virtual void setup();
+      virtual void clear();
    
       /**
       * Add particles to StructureFactor accumulators.
@@ -164,17 +164,17 @@ namespace DdMd
       DMatrix<double>  modes_;
 
       /**
-      * Array of maximum structure factor values. 
+      * Array of vector of maximum structure factor values. 
       */
       DArray< std::vector<double> > maximumValue_;
 
       /**
-      * Array of Miller index IntVector with maximum S(q).
+      * Array of vector of Miller index IntVector with maximum S(q).
       */
       DArray< std::vector<IntVector> > maximumWaveIntVector_;
 
       /**
-      * Array of magnitudes of waveVector with maximum S(q).
+      * Array of vector of magnitudes of waveVector with maximum S(q).
       */
       DArray< std::vector<double> > maximumQ_;
 
@@ -194,8 +194,6 @@ namespace DdMd
       * Update wavevectors.
       */
       void makeWaveVectors();
-
-   private:
 
       /// Has readParam been called?
       bool isInitialized_;

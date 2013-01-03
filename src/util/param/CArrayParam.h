@@ -1,5 +1,5 @@
-#ifndef CARRAY_PARAM_H
-#define CARRAY_PARAM_H
+#ifndef UTIL_CARRAY_PARAM_H
+#define UTIL_CARRAY_PARAM_H
 
 #include <util/param/Parameter.h>
 #include <util/global.h>
@@ -80,8 +80,9 @@ namespace Util
          }
       }
       #ifdef UTIL_MPI
-         if (hasParamCommunicator()) 
-            bcast<Type>(paramCommunicator(), value_, n_, 0); 
+      if (hasParamCommunicator()) {
+         bcast<Type>(paramCommunicator(), value_, n_, 0); 
+      }
       #endif
    }
 

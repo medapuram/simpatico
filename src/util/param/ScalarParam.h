@@ -1,5 +1,5 @@
-#ifndef SCALAR_PARAM_H
-#define SCALAR_PARAM_H
+#ifndef UTIL_SCALAR_PARAM_H
+#define UTIL_SCALAR_PARAM_H
 
 /*
 * Simpatico - Simulation Package for Polymeric and Molecular Liquids
@@ -106,8 +106,9 @@ namespace Util
          }
       }
       #ifdef UTIL_MPI
-         if (hasParamCommunicator()) 
-            bcast<Type>(paramCommunicator(), *valuePtr_, 0); 
+      if (hasParamCommunicator()) {
+         bcast<Type>(paramCommunicator(), *valuePtr_, 0); 
+      }
       #endif
    }
 

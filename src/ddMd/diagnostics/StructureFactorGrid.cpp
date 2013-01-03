@@ -28,8 +28,7 @@ namespace DdMd
     : StructureFactor(simulation),
       hMax_(0),
       nStar_(0),
-      lattice_(Triclinic),
-      isInitialized_(false)
+      lattice_(Triclinic)
    {}
 
    /// Read parameters from file, and allocate data array.
@@ -167,13 +166,6 @@ namespace DdMd
          }
       }
 
-      // Clear accumulators
-      for (i = 0; i < nWave_; ++i) {
-         for (j = 0; j < nMode_; ++j) {
-            structureFactors_(i, j) = 0.0;
-         }
-      }
-
       if (simulation().domain().isMaster()) {
          maximumValue_.allocate(nMode_);
          maximumWaveIntVector_.allocate(nMode_);
@@ -189,9 +181,6 @@ namespace DdMd
 
       isInitialized_ = true;
    }
-
-   void StructureFactorGrid::setup() 
-   {}
 
    void StructureFactorGrid::output()
    {

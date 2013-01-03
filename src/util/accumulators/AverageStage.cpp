@@ -1,5 +1,5 @@
-#ifndef AVERAGE_STAGE_CPP
-#define AVERAGE_STAGE_CPP
+#ifndef UTIL_AVERAGE_STAGE_CPP
+#define UTIL_AVERAGE_STAGE_CPP
 
 /*
 * Simpatico - Simulation Package for Polymeric and Molecular Liquids
@@ -153,7 +153,7 @@ namespace Util
    * Estimated statistical error of the average().
    */
    double AverageStage::error() const
-   {  return sqrt(variance()/double(nSample_)); }
+   {  return sqrt(variance()/double(nSample_-1)); }
 
 }
 #endif

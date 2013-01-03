@@ -1,5 +1,5 @@
-#ifndef DMATRIX_PARAM_H
-#define DMATRIX_PARAM_H
+#ifndef UTIL_DMATRIX_PARAM_H
+#define UTIL_DMATRIX_PARAM_H
 
 /*
 * Simpatico - Simulation Package for Polymeric and Molecular Liquids
@@ -102,8 +102,9 @@ namespace Util
          }
       }
       #ifdef UTIL_MPI
-         if (hasParamCommunicator()) 
-            bcast<Type>(paramCommunicator(), *matrixPtr_, m_, n_, 0); 
+      if (hasParamCommunicator()) {
+         bcast<Type>(paramCommunicator(), *matrixPtr_, m_, n_, 0); 
+      }
       #endif
    }
 

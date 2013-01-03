@@ -1,5 +1,5 @@
-#ifndef LJ_PAIR_CPP
-#define LJ_PAIR_CPP
+#ifndef INTER_LJ_PAIR_CPP
+#define INTER_LJ_PAIR_CPP
 
 /*
 * Simpatico - Simulation Package for Polymeric and Molecular Liquids
@@ -230,6 +230,19 @@ namespace Inter
          sigma_[j][i] = value;
       } else {
          UTIL_THROW("Unrecognized parameter name");
+      }
+
+      sigmaSq_[i][j] = sigma_[i][j]*sigma_[i][j];
+
+      // Recalculate shift
+      double r6i = sigmaSq_[i][j]/cutoffSq_[i][j];
+      r6i = r6i*r6i*r6i;
+      ljShift_[i][j] = -4.0*epsilon_[i][j]*(r6i*r6i - r6i);
+
+      //Symmetrize
+      if (j != i) {
+         sigmaSq_[j][i] = sigmaSq_[i][j];
+         ljShift_[j][i] = ljShift_[j][i];
       }
    }
 

@@ -1,5 +1,5 @@
-#ifndef CARRAY_2D_PARAM_H
-#define CARRAY_2D_PARAM_H
+#ifndef UTIL_CARRAY_2D_PARAM_H
+#define UTIL_CARRAY_2D_PARAM_H
 
 /*
 * Simpatico - Simulation Package for Polymeric and Molecular Liquids
@@ -103,8 +103,9 @@ namespace Util
          }
       }
       #ifdef UTIL_MPI
-         if (hasParamCommunicator()) 
-            bcast<Type>(paramCommunicator(), value_, m_*n_, 0); 
+      if (hasParamCommunicator()) {
+         bcast<Type>(paramCommunicator(), value_, m_*n_, 0); 
+      }
       #endif
    }
 
