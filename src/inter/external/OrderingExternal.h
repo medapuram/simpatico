@@ -159,9 +159,6 @@ namespace Inter
       /// Interface width
       double interfaceWidth_;
 
-      /// Interface widths array ofsize nWaveVectors
-      DArray<double> interfaceWidths_;
-
       /// Pointer to associated Boundary object.
       Boundary *boundaryPtr_;
    
@@ -194,12 +191,6 @@ namespace Inter
          cosine += cos(arg);
       }
       cosine *= clipParameter;
-         double arg, clipParameter;
-         arg = q.dot(position);
-         //double qLengths = q.dot(cellLengths);
-         //clipParameter = 1.0/qLengths;
-         cosine += cos(arg);
-      }
       return prefactor_[type]*externalParameter_*tanh(cosine);
    }
 
@@ -223,10 +214,6 @@ namespace Inter
          q[2] = 2.0*M_PI*waveIntVectors_[i][2]/cellLengths[2];
          double arg, sine;
          arg = q.dot(position);
-         double arg, sine, clipParameter;
-         arg = q.dot(position);
-         //double qLengths = q.dot(cellLengths);
-         //clipParameter = 1.0/qLengths;
          cosine += cos(arg);
          sine = -1.0*sin(arg);
          q *= sine;
