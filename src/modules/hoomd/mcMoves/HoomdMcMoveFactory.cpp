@@ -6,6 +6,7 @@
 
 #include <modules/hoomd/mcMoves/HoomdMove.h>
 #include <modules/hoomd/mcMoves/HoomdNPHMove.h>
+#include <modules/hoomd/mcMoves/HoomdNPHNMove.h>
 
 namespace McMd
 {
@@ -31,6 +32,9 @@ namespace McMd
       }          
       if (className == "HoomdNPHMove") {
         spp = new HoomdNPHMove(system());           
+      }
+      if (className == "HoomdNPHNMove") {
+        spp = new HoomdNPHNMove(system());           
       }
       return spp;
    }
