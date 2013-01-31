@@ -26,6 +26,7 @@
 #include <mcMd/mcSimulation/McSystem.h>
 #include <mcMd/potentials/external/ExternalPotential.h>
 #include <inter/external/TanhCosineExternal.h>
+#include <inter/external/OrderingExternal.h>
 #ifndef INTER_NOPAIR
 #include "McPairExternalPerturbation.h"
 #include <mcMd/potentials/pair/McPairPotential.h>
@@ -79,12 +80,16 @@ namespace McMd
          if (pairInteractionClassName == "LJPair") {
             if (externalInteractionClassName == "TanhCosineExternal") {
                ptr = new McPairExternalPerturbation<LJPair,TanhCosineExternal> (*systemPtr_);
+            } else if (externalInteractionClassName == "OrderingExternal") {
+               ptr = new McPairExternalPerturbation<LJPair,OrderingExternal> (*systemPtr_);
             } else {
                UTIL_THROW("Unsupported external potential.");
             }
          } else if (pairInteractionClassName == "DpdPair") {
             if (externalInteractionClassName == "TanhCosineExternal") {
                ptr = new McPairExternalPerturbation<DpdPair,TanhCosineExternal> (*systemPtr_);
+            } else if (externalInteractionClassName == "OrderingExternal") {
+               ptr = new McPairExternalPerturbation<DpdPair,OrderingExternal> (*systemPtr_);
             } else {
                UTIL_THROW("Unsupported external potential.");
             }
@@ -100,6 +105,8 @@ namespace McMd
             interactionClassName();
          if (interactionClassName == "TanhCosineExternal") {
             ptr = new McExternalPerturbation<TanhCosineExternal> (*systemPtr_);
+         } else if (interactionClassName == "OrderingExternal") {
+            ptr = new McExternalPerturbation<OrderingExternal> (*systemPtr_);
          } else {
             UTIL_THROW("Unsupported external potential.");
          }

@@ -80,6 +80,9 @@ namespace McMd
       /// Array of floating point reciprocal lattice vectors.
       DArray<Vector>  waveVectors_;
 
+      double interfaceWidth_;
+
+      int periodicity_;
    };
   
 }

@@ -32,6 +32,8 @@ namespace McMd
           classNameHoomdOrdering >(other)
    {
       externalParameter_ = other.externalParameter_;
+      interfaceWidth_ = other.interfaceWidth_;
+      periodicity_ = other.periodicity_;
    }
 
    /**
@@ -58,6 +60,8 @@ namespace McMd
             waveVectors_[i] += dWave;
          }
       }
+      read<double>(in, "interfaceWidth", interfaceWidth_);
+      read<int>(in, "periodicity", periodicity_);
    
       for (int i = 0; i < nAtomType_; ++i) {
          params_[i].x = __int_as_scalar(perpDirection_);
