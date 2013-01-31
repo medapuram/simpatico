@@ -18,6 +18,8 @@
 #include "StructureFactorPGrid.h"
 #include "StructureFactor.h"
 #include "StructureFactorGrid.h"
+#include "AsymmSf.h"
+#include "AsymmSfGrid.h"
 #include "IntraStructureFactor.h"
 #include "VanHove.h"
 #ifdef UTIL_MPI
@@ -83,6 +85,12 @@ namespace McMd
       if (className == "StructureFactorGrid") {
          ptr = new StructureFactorGrid(system());
       } else 
+      if (className == "AsymmSf") {
+         ptr = new AsymmSf(system());
+      } else 
+      if (className == "AsymmSfGrid") {
+         ptr = new AsymmSfGrid(system());
+      } else
       if (className == "IntraStructureFactor") {
          ptr = new IntraStructureFactor(system());
       } else 
