@@ -75,7 +75,7 @@ namespace McMd
       }
 
       read<std::string>(in, "phase", phase_);
-      if (phase_ != "disordered" || phase_ != "ordered")
+      if (phase_ != "disordered" && phase_ != "ordered")
          UTIL_THROW("Unsupported phase.");
 
       read<double>(in, "maxSF", maxSF_);
