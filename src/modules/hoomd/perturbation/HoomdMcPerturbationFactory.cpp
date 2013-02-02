@@ -51,17 +51,14 @@ namespace McMd
    {
       Perturbation *ptr = 0;
 
-      int size = systemPtr_->simulation().communicator().Get_size();
-      int rank = systemPtr_->simulation().communicator().Get_rank();
-
       #ifndef INTER_NOPAIR
       if (className == "McPairPerturbation") {
          const std::string& interactionClassName = systemPtr_->pairPotential().
             interactionClassName();
          if (interactionClassName == "HoomdLJPair") {
-            ptr = new McPairPerturbation<HoomdLJPair> (*systemPtr_, size, rank);
+            ptr = new McPairPerturbation<HoomdLJPair> (*systemPtr_);
          } else if (interactionClassName == "HoomdDpdPair") {
-            ptr = new McPairPerturbation<HoomdDpdPair> (*systemPtr_, size, rank);
+            ptr = new McPairPerturbation<HoomdDpdPair> (*systemPtr_);
          } 
       } 
       #endif
@@ -70,7 +67,7 @@ namespace McMd
          const std::string& interactionClassName = systemPtr_->externalPotential().
             interactionClassName();
          if (interactionClassName == "HoomdPeriodicExternal") {
-            ptr = new McExternalPerturbation<HoomdPeriodicExternal> (*systemPtr_, size, rank);
+            ptr = new McExternalPerturbation<HoomdPeriodicExternal> (*systemPtr_);
          }
       }
       #endif
@@ -83,13 +80,13 @@ namespace McMd
             interactionClassName();
          if (pairInteractionClassName == "HoomdLJPair") {
             if (externalInteractionClassName == "HoomdPeriodicExternal") {
-               ptr = new McPairExternalPerturbation<HoomdLJPair,HoomdPeriodicExternal> (*systemPtr_, size, rank);
+               ptr = new McPairExternalPerturbation<HoomdLJPair,HoomdPeriodicExternal> (*systemPtr_);
             } else {
                UTIL_THROW("Unsupported external potential.");
             }
          } else if (pairInteractionClassName == "HoomdDpdPair") {
             if (externalInteractionClassName == "HoomdPeriodicExternal") {
-               ptr = new McPairExternalPerturbation<HoomdDpdPair,HoomdPeriodicExternal> (*systemPtr_, size, rank);
+               ptr = new McPairExternalPerturbation<HoomdDpdPair,HoomdPeriodicExternal> (*systemPtr_);
             } else {
                UTIL_THROW("Unsupported external potential.");
             }

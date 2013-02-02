@@ -81,9 +81,7 @@ namespace McMd
 
    public:
 
-      /**
-      * Number of diagnostic samples in simulation.
-      */
+      /// Number of diagnostic samples in simulation.
       static const int Samples = 100000;
       
       /**	
@@ -105,29 +103,6 @@ namespace McMd
       */
       virtual void readParameters(std::istream& in);
 
-      /**
-      * Load state from an archive.
-      *
-      * \param ar loading (input) archive.
-      */
-      virtual void loadParameters(Serializable::IArchive& ar);
-
-      /**
-      * Save state to archive.
-      *
-      * \param ar saving (output) archive.
-      */
-      virtual void save(Serializable::OArchive& ar);
-
-      /**
-      * Serialize to/from an archive. 
-      *
-      * \param ar      saving or loading archive
-      * \param version archive version id
-      */
-      template <class Archive>
-      void serialize(Archive& ar, const unsigned int version);
-
       /** 
       * Clear accumulators.
       */
@@ -138,33 +113,54 @@ namespace McMd
       *
       * \param iStep step counter
       */
-      virtual void sample(long iStep);
+      void sample(long iStep);
 
       /**
       * Output results to predefined output file.
       */
       virtual void output();
 
-   protected:
+      /**
+      * Save state to binary file archive.
+      *
+      * \param ar binary saving (output) archive.
+      */
+      virtual void save(Serializable::OArchiveType& ar);
 
       /**
-      * Output file stream.
+      * Load state from a binary file archive.
+      *
+      * \param ar binary loading (input) archive.
       */
+      virtual void load(Serializable::IArchiveType& ar);
+
+      /**
+      * Serialize to/from an archive. 
+      *
+      * \param ar      saving or loading archive
+      * \param version archive version id
+      */
+      template <class Archive>
+      void serialize(Archive& ar, const unsigned int version);
+
+   protected:
+
+      /// Output file stream.
       std::ofstream outputFile_;
 
       /**
       * Structure factor accumulators. 
       * 
-      * First index is wavevector, second is a mode index.
+      * First index is wavevector, second index is mode index.
       */
       DMatrix<double> structureFactors_;
       
       /**
-      * Instantaneous Fourier amplitudes (temporary)
+      * Fourier modes of concentration.
       *
-      * First index is wavevector, second is mode index.
+      * First index is wavevector, second is atom type.
       */
-      DMatrix< std::complex<double> > fourierModes_;
+      DMatrix< std::complex<double> >  fourierModes_;
 
       /**
       * Array of Miller index IntVectors for wavevectors.
@@ -172,7 +168,7 @@ namespace McMd
       DArray<IntVector>  waveIntVectors_;
 
       /**
-      * Array of floating point wave vectors (temporary).
+      * Array of floating point wave vectors.
       */
       DArray<Vector>  waveVectors_;
 
@@ -228,21 +224,19 @@ namespace McMd
    template <class Archive>
    void AsymmSf::serialize(Archive& ar, const unsigned int version)
    {
-      Diagnostic::serialize(ar, version);
-      ar & nAtomType_;
-      ar & nMode_;
-      ar & modes_;
-      ar & nWave_;
-      ar & waveIntVectors_;
-
+      if (!isInitialized_) {
+         UTIL_THROW("Error: Object not initialized.");
+      }
       ar & structureFactors_;
+      ar & fourierModes_;
       ar & nSample_;
 
-      #if 0
-      ar & maximumValue_;
-      ar & maximumWaveIntVector_;
-      ar & maximumQ_;
-      #endif
+      serializeCheck(ar, nAtomType_, "nAtomType");
+      serializeCheck(ar, nMode_, "nMode");
+      serializeCheck(ar, nWave_, "nWave");
+      for (int i = 0; i < nWave_; ++i) {
+         serializeCheck(ar, waveIntVectors_[i], "waveIntVector");
+      }
    }
 
 }
