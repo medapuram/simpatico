@@ -57,7 +57,7 @@ namespace McMd
       } else
       if (name == "TanhCosineExternal") {
          ptr = new ExternalPotentialImpl<TanhCosineExternal>(*systemPtr_);
-      } else
+      }
       if (name == "OrderingExternal") {
          ptr = new ExternalPotentialImpl<OrderingExternal>(*systemPtr_);
       }

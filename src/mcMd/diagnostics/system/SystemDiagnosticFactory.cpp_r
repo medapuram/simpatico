@@ -17,8 +17,8 @@
 #include "StructureFactorP.h"
 #include "StructureFactorPGrid.h"
 #include "StructureFactor.h"
-#include "StructureFactorGrid.h"
 #include "AsymmSf.h"
+#include "StructureFactorGrid.h"
 #include "AsymmSfGrid.h"
 #include "IntraStructureFactor.h"
 #include "VanHove.h"
@@ -90,7 +90,7 @@ namespace McMd
       } else 
       if (className == "AsymmSfGrid") {
          ptr = new AsymmSfGrid(system());
-      } else
+      } else 
       if (className == "IntraStructureFactor") {
          ptr = new IntraStructureFactor(system());
       } else 

@@ -8,7 +8,7 @@
 * Distributed under the terms of the GNU General Public License.
 */
 
-#include "StructureFactor.h"
+#include "AsymmSf.h"
 #include <util/crystal/LatticeSystem.h>
 
 namespace McMd
@@ -56,7 +56,7 @@ namespace McMd
    * 
    * \ingroup McMd_Diagnostic_Module
    */
-   class AsymmSfGrid : public StructureFactor
+   class AsymmSfGrid : public AsymmSf
    {
 
    public:
@@ -84,6 +84,29 @@ namespace McMd
       virtual void readParameters(std::istream& in);
 
       /**
+      * Load state from an archive.
+      *
+      * \param ar loading (input) archive.
+      */
+      virtual void loadParameters(Serializable::IArchive& ar);
+
+      /**
+      * Save state to archive.
+      *
+      * \param ar saving (output) archive.
+      */
+      virtual void save(Serializable::OArchive& ar);
+
+      /**
+      * Serialize to/from an archive. 
+      *
+      * \param ar      saving or loading archive
+      * \param version archive version id
+      */
+      template <class Archive>
+      void serialize(Archive& ar, const unsigned int version);
+
+      /**
       * Set up before a simulation.
       */
       virtual void setup();
@@ -94,19 +117,12 @@ namespace McMd
       virtual void output();
 
       /**
-      * Save state to binary file archive.
+      * Add particles to AsymmSf accumulators.
       *
-      * \param ar binary saving (output) archive.
+      * \param iStep step counter
       */
-      virtual void save(Serializable::OArchiveType& ar);
+      virtual void sample(long iStep);
 
-      /**
-      * Load state from a binary file archive.
-      *
-      * \param ar binary loading (input) archive.
-      */
-      virtual void load(Serializable::IArchiveType& ar);
- 
    private:
 
       /// Array of ids for first wavevector in each star.
@@ -127,7 +143,28 @@ namespace McMd
       /// Has readParam been called?
       bool    isInitialized_;
 
+      /// Log file
+      std::ofstream logFile_;
+
+      /// Is this the first step?
+      bool isFirstStep_;
    };
+
+
+   /*
+   * Serialize to/from an archive. 
+   */
+   template <class Archive>
+   void AsymmSfGrid::serialize(Archive& ar, const unsigned int version)
+   {
+      AsymmSf::serialize(ar, version);
+      ar & hMax_;
+      //serializeEnum(ar, lattice_);
+      ar & lattice_;
+      ar & nStar_;
+      ar & starIds_;
+      ar & starSizes_;
+   }
 
 }
 #endif
