@@ -138,9 +138,12 @@ namespace McMd
       oldEnergy += system().pairPotential().moleculeEnergy(*molPtr);
       #endif
       #ifdef INTER_EXTERNAL
+      bool implementExternalPotential = system().implementExternalPotential();
+      if (implementExternalPotential) {
       for (i = 0; i < nAtom; ++i) {
          atomPtr = &molPtr->atom(i);
          oldEnergy += system().externalPotential().atomEnergy(*atomPtr);
+      }
       }
       #endif
 
@@ -156,10 +159,12 @@ namespace McMd
       newEnergy += system().pairPotential().moleculeEnergy(*molPtr);
       #endif
       #ifdef INTER_EXTERNAL
+      if (implementExternalPotential) {
       for (i = 0; i < nAtom; ++i) {
          molPtr->atom(i).setTypeId(atomTypeIds_[nAtom - 1 - i]);   
          atomPtr = &molPtr->atom(i);
          newEnergy += system().externalPotential().atomEnergy(*atomPtr);
+      }
       }
       #endif
 

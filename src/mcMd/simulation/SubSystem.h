@@ -135,6 +135,7 @@ namespace McMd
       #ifdef INTER_EXTERNAL
       /// Does an external potential exist?
       bool hasExternal() const;
+      bool implementExternal() const;
       #endif
 
       #ifdef INTER_TETHER
@@ -184,6 +185,7 @@ namespace McMd
       #ifdef INTER_EXTERNAL
       // Does an external potential exist?
       bool hasExternal_;
+      bool implementExternal_;
       #endif
 
       #ifdef INTER_TETHER
@@ -281,6 +283,8 @@ namespace McMd
    /// Does an external potential exist?
    inline bool SubSystem::hasExternal() const
    { return hasExternal_; }
+   inline bool SubSystem::implementExternal() const
+   { return implementExternal_; }
    #endif
 
    #ifdef INTER_TETHER

@@ -185,15 +185,15 @@ namespace Inter
     
    inline double TanhCosineExternal::energy(double d, int type) const
    {
-      double perpLength_, q_, clipParameter_, arg, clipcos;
-      Vector lengths_;
-      lengths_ = boundaryPtr_->lengths();
-      perpLength_ = lengths_[perpDirection_];
-      q_ = (2.0*M_PI*periodicity_)/perpLength_;
-      clipParameter_   = 1.0/(q_*width_*perpLength_);
+      double perpLength, q, clipParameter, arg, clipcos;
+      Vector lengths;
+      lengths = boundaryPtr_->lengths();
+      perpLength = lengths[perpDirection_];
+      q = 2.0*M_PI*periodicity_/perpLength;
+      clipParameter = 1.0/(q*width_*perpLength);
 
-      arg = q_*d;
-      clipcos = clipParameter_*cos(arg);
+      arg = q*d;
+      clipcos = clipParameter*cos(arg);
       
       return prefactor_[type]*externalParameter_*tanh(clipcos);
    }
@@ -208,7 +208,7 @@ namespace Inter
       totalEnergy = 0.0;
       d = position[perpDirection_];
       totalEnergy += energy(d, type);
-      
+       
       return totalEnergy;
    }
 
@@ -217,17 +217,17 @@ namespace Inter
    */
    inline double TanhCosineExternal::forceScalar(double d, int type) const
    {
-      double perpLength_, q_, clipParameter_, arg, clipcos, tanH, sechSq;
-      Vector lengths_;
-      lengths_ = boundaryPtr_->lengths();
-      perpLength_ = lengths_[perpDirection_];
-      q_ = (2.0*M_PI*periodicity_)/perpLength_;
-      clipParameter_   = 1.0/(q_*width_*perpLength_);
-      arg = q_*d;
-      clipcos = clipParameter_*cos(arg);
+      double perpLength, q, clipParameter, arg, clipcos, tanH, sechSq;
+      Vector lengths;
+      lengths = boundaryPtr_->lengths();
+      perpLength = lengths[perpDirection_];
+      q = 2.0*M_PI*periodicity_/perpLength;
+      clipParameter = 1.0/(q*width_*perpLength);
+      arg = q*d;
+      clipcos = clipParameter*cos(arg);
       tanH = tanh(clipcos);
       sechSq = (1.0 - tanH*tanH);
-      return prefactor_[type]*externalParameter_*sechSq*clipParameter_*sin(arg)*q_;
+      return prefactor_[type]*externalParameter_*sechSq*clipParameter*sin(arg)*q;
    }
 
    /* 

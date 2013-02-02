@@ -53,6 +53,7 @@ namespace McMd
       #endif
       #ifdef INTER_EXTERNAL
       hasExternal_(-1),
+      implementExternal_(-1),
       #endif
       #ifdef INTER_TETHER
       hasTether_(-1),
@@ -112,6 +113,7 @@ namespace McMd
       #endif
       #ifdef INTER_EXTERNAL
       hasExternal_(-1),
+      implementExternal_(-1),
       #endif
       #ifdef INTER_TETHER
       hasTether_(-1),
@@ -212,6 +214,7 @@ namespace McMd
 
       #ifdef INTER_EXTERNAL
       read<int>(in, "hasExternal", hasExternal_);
+      read<int>(in, "implementExternal", implementExternal_);
       if (hasExternal_ < 0) {
          UTIL_THROW("hasExternal must be >= 0");
       }

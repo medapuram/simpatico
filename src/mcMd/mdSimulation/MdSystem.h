@@ -253,6 +253,7 @@ namespace McMd
       * Does an external potential exist?.
       */
       bool hasExternalPotential() const;
+      bool implementExternalPotential() const;
 
       /**
       * Return ExternalPotential by reference.
@@ -361,6 +362,7 @@ namespace McMd
       #ifdef INTER_EXTERNAL
       /// Pointer to an ExternalPotential. 
       ExternalPotential* externalPotentialPtr_;
+      bool implementExternalPotential_;
       #endif
 
       #ifdef INTER_TETHER
@@ -489,6 +491,11 @@ namespace McMd
    inline bool MdSystem::hasExternalPotential() const
    {
       return bool(externalPotentialPtr_); 
+   }
+
+   inline bool MdSystem::implementExternalPotential() const
+   {
+      return implementExternalPotential_; 
    }
 
    /*

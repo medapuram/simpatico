@@ -303,7 +303,7 @@ namespace McMd
             UTIL_THROW("Non isothermal ensemble");
          }
 
-         deriv = -1.0*(externalEnergy/parameter_[i]);
+         deriv = 1.0*(externalEnergy/parameter_[i]);
 
       } 
       return deriv;

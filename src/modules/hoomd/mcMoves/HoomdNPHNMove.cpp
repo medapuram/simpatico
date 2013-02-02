@@ -1,5 +1,5 @@
-#ifndef HOOMD_NPH_MOVE_CPP
-#define HOOMD_NPH_MOVE_CPP
+#ifndef HOOMD_NPHN_MOVE_CPP
+#define HOOMD_NPHN_MOVE_CPP
 
 /*
 * Simpatico - Simulation Package for Polymeric and Molecular Liquids
@@ -8,7 +8,7 @@
 * Distributed under the terms of the GNU General Public License.
 */
 
-#include "HoomdNPHMove.h"
+#include "HoomdNPHNMove.h"
 
 #include <mcMd/mcSimulation/McSystem.h>
 #include <mcMd/simulation/Simulation.h>
@@ -23,7 +23,7 @@ namespace McMd
    /*
    * Constructor
    */
-   HoomdNPHMove::HoomdNPHMove(McSystem& system) :
+   HoomdNPHNMove::HoomdNPHNMove(McSystem& system) :
       HoomdMove(system), W_(0.0)
    {
    }
@@ -31,13 +31,13 @@ namespace McMd
    /*
    * Destructor.
    */
-   HoomdNPHMove::~HoomdNPHMove()
+   HoomdNPHNMove::~HoomdNPHNMove()
    {}
 
    /*
    * Read parameters
    */
-   void HoomdNPHMove::readParameters(std::istream& in)
+   void HoomdNPHNMove::readParameters(std::istream& in)
    {
       if ((! system().boundaryEnsemble().isIsobaric()) || (!energyEnsemble().isIsothermal()))
          UTIL_THROW("Must be in isothermal-isobaric ensemble.");
@@ -90,7 +90,7 @@ namespace McMd
 
    }
  
-   void HoomdNPHMove::createIntegrator()     
+   void HoomdNPHNMove::createIntegrator()     
    {
 
       // create NVE Integrator 
@@ -121,7 +121,7 @@ namespace McMd
    /*
    * Generate, attempt and accept or reject a Hybrid MD/MC move.
    */
-   bool HoomdNPHMove::move()
+   bool HoomdNPHNMove::move()
    {
       if ((!HoomdIsInitialized_) || moleculeSetHasChanged_) {
          initSimulation();
@@ -277,37 +277,7 @@ namespace McMd
       bool accept;
 
       // Decide whether to accept or reject
-      if (integrationMode_ == TwoStepNPHGPU::tetragonal) {
-         if (!setConstrain_) {
-            double  newAspectRatio, aspectRatioParam;
-            newAspectRatio = double(newLengths[0]/newLengths[1]);
-            if ( newAspectRatio > 1.4 || newAspectRatio < 0.8) {
-               accept = false;
-            } else {
-               accept = random.metropolis( boltzmann(newH-oldH) );
-            }
-         } else
-         if (setConstrain_) {
-            double diffLx, diffLy;
-            if ( newLengths[0] >= constrainLengths_[0] ) {
-               diffLx = newLengths[0] - constrainLengths_[0];
-            } else {
-               diffLx = -(newLengths[0] - constrainLengths_[0]);
-            }
-            if ( newLengths[1] >= constrainLengths_[1] ) {
-               diffLy = newLengths[1] - constrainLengths_[1];
-            } else {
-               diffLy = -(newLengths[1] - constrainLengths_[1]);
-            }
-            if ( diffLx > 0.5 || diffLy > 0.5 ) {
-               accept = false;
-            } else {
-               accept = random.metropolis( boltzmann(newH-oldH) );
-            }
-         }
-      } else {
-            accept = random.metropolis( boltzmann(newH-oldH) );
-      }
+      accept = random.metropolis( boltzmann(newH-oldH) );
 
       if (accept) {
          // read back new boundary

@@ -77,6 +77,7 @@ namespace McMd
       #endif
       #ifdef INTER_EXTERNAL
       externalPotentialPtr_(0),
+      implementExternalPotential_(-1),
       #endif
       #ifdef INTER_TETHER
       tetherPotentialPtr_(0),
@@ -106,6 +107,7 @@ namespace McMd
       #endif
       #ifdef INTER_EXTERNAL
       externalPotentialPtr_(0),
+      implementExternalPotential_(-1),
       #endif
       #ifdef INTER_TETHER
       tetherPotentialPtr_(0),
@@ -140,6 +142,7 @@ namespace McMd
       #ifdef INTER_EXTERNAL
       if (system.hasExternalPotential()) {
          externalPotentialPtr_ = &system.externalPotential();
+         implementExternalPotential_ = system.implementExternalPotential();
       }
       #endif
       #ifdef INTER_TETHER
@@ -278,6 +281,7 @@ namespace McMd
             }
             readParamComposite(in, *externalPotentialPtr_);
          }
+         implementExternalPotential_ = simulation().implementExternal();
          #endif
 
          #ifdef INTER_TETHER
@@ -666,7 +670,7 @@ namespace McMd
       }
       #endif
       #ifdef INTER_EXTERNAL
-      if (hasExternalPotential()) {
+      if ( hasExternalPotential() && implementExternalPotential() ) {
          externalPotential().addForces();
       }
       #endif

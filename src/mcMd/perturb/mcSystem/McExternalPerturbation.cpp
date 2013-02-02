@@ -124,7 +124,7 @@ namespace McMd
          UTIL_THROW("Non isothermal ensemble.");
       }
 
-      return energy/parameter_[i]; 
+      return 1.0*(energy/parameter_[i]); 
    }
 
 }

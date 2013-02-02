@@ -12,6 +12,7 @@
 #include <mcMd/simulation/System.h>
 #include <mcMd/simulation/Simulation.h>
 
+#include <util/space/Dimension.h>
 #include <util/param/ParamComposite.h>
 #include <util/boundary/Boundary.h>
 #include <util/global.h>
@@ -186,7 +187,11 @@ namespace McMd
       const Vector& position, int i, Vector& force) const
    {
       Vector lengths = boundaryPtr_->lengths();
-      Scalar3 X = make_scalar3(position[0], position[1], position[2]);
+      Vector scaledPosition;
+      for (int i = 0; i < Dimension; i++) {
+         scaledPosition[i] = position[i]/lengths[i];
+      }
+      Scalar3 X = make_scalar3(scaledPosition[0], scaledPosition[1], scaledPosition[2]);
       
       hoomd_evaluator eval(X, lengths[0], lengths[1], lengths[2], params_[i]);
       Scalar3 Force;
@@ -209,7 +214,11 @@ namespace McMd
       const Vector& position, int i) const
    {
       Vector lengths = boundaryPtr_->lengths();
-      Scalar3 X = make_scalar3(position[0], position[1], position[2]);
+      Vector scaledPosition;
+      for (int i = 0; i < Dimension; i++) {
+         scaledPosition[i] = position[i]/lengths[i];
+      }
+      Scalar3 X = make_scalar3(scaledPosition[0], scaledPosition[1], scaledPosition[2]);
       hoomd_evaluator eval(X, lengths[0], lengths[1], lengths[2], params_[i]);
       Scalar3 Force;
       Scalar energy = 0;
