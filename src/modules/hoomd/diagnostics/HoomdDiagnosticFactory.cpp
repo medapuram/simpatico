@@ -8,7 +8,6 @@
 #include "HoomdDiagnosticFactory.h" // Class header
 
 #include "GPUStructureFactorGrid.h"
-#include "GPUAsymmSfGrid.h"
 
 namespace McMd
 {
@@ -33,10 +32,7 @@ namespace McMd
 
       if (className == "GPUStructureFactorGrid") {
          ptr = new GPUStructureFactorGrid(*systemPtr_);
-      } else
-      if (className == "GPUAsymmSfGrid") {
-         ptr = new GPUAsymmSfGrid(*systemPtr_);
-      } 
+      }
 
       return ptr;
    }
