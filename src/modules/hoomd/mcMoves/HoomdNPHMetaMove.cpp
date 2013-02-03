@@ -485,7 +485,7 @@ namespace McMd
       if (res)
           UTIL_THROW("Error updating structure factor.");
 
-      bool accept;
+      bool accept = true;
 
       double maxValue;
 
@@ -499,10 +499,12 @@ namespace McMd
          }
       }
 
-      if (phase_ == "disordered" && maxValue > maxSF_) {
-         accept = false;
-      } else if (phase_ == "ordered" && maxValue < maxSF_) {
-         accept = false;
+      if (phase_ == "disordered") {
+         if (maxValue > maxSF_)
+            accept = false;
+      } else if (phase_ == "ordered") {
+         if (maxValue < maxSF_)
+            accept = false;
       } 
 
       // Decide whether to accept or reject
