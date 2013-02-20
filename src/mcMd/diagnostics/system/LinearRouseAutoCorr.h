@@ -127,6 +127,8 @@ namespace McMd
       /// Maximum length of each sequence in AutoCorrArray.
       int      capacity_;
    
+      int blockFactor_;
+
       /// Has readParam been called?
       bool    isInitialized_;
 

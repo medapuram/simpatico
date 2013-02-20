@@ -37,6 +37,7 @@ namespace McMd
       nAtom_(-1),
       p_(-1),
       capacity_(-1),
+      blockFactor_(0),
       isInitialized_(false)
    {  setClassName("LinearRouseAutoCorr"); }
 
@@ -77,7 +78,7 @@ namespace McMd
 
       // Allocate arrays
       int speciesCapacity = speciesPtr_->capacity();
-      accumulator_.setParam(speciesCapacity, capacity_);
+      accumulator_.setParam(speciesCapacity, capacity_, blockFactor_);
       data_.allocate(speciesCapacity); 
       projector_.allocate(nAtom_);
 
