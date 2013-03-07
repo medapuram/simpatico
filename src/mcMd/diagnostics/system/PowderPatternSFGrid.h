@@ -1,5 +1,5 @@
-#ifndef MCMD_STRUCTURE_FACTOR_GRID_H
-#define MCMD_STRUCTURE_FACTOR_GRID_H
+#ifndef MCMD_POWDER_PATTERN_SF_GRID_H
+#define MCMD_POWDER_PATTERN_SF_GRID_H
 
 /*
 * Simpatico - Simulation Package for Polymeric and Molecular Liquids
@@ -9,6 +9,8 @@
 */
 
 #include "StructureFactor.h"
+#include <util/accumulators/ValueDistribution.h>
+#include <util/containers/DArray.h>               // member template
 #include <util/crystal/LatticeSystem.h>
 
 namespace McMd
@@ -17,7 +19,7 @@ namespace McMd
    using namespace Util;
 
    /**
-   * StructureFactorGrid evaluates structure factors in Fourier space.
+   * PowderPatternSFGrid evaluates structure factors in Fourier space.
    *
    * This class evaluates the structures factors for all wavevectors
    * for all wavevectors within a grid, within a region in which all
@@ -36,9 +38,9 @@ namespace McMd
    * and including 5:
    *
    * \code
-   * StructureFactorGrid{
+   * PowderPatternSFGrid{
    *    interval                     1000
-   *    outputFileName     StructureFactorGrid
+   *    outputFileName     PowderPatternSFGrid
    *    nAtomTypeIdPair                  3
    *    atomTypeIdPairs          -1     -1
    *                              0      0
@@ -56,7 +58,7 @@ namespace McMd
    * 
    * \ingroup McMd_Diagnostic_Module
    */
-   class StructureFactorGrid : public StructureFactor
+   class PowderPatternSFGrid : public StructureFactor
    {
 
    public:
@@ -66,7 +68,7 @@ namespace McMd
       *
       * \param system reference to parent System object
       */
-      StructureFactorGrid(System &system);
+      PowderPatternSFGrid(System &system);
 
       /**
       * Read parameters from file.
@@ -132,6 +134,9 @@ namespace McMd
       /// Number of stars of symmetry related wavevectors.
       int   nStar_;
 
+      DArray<ValueDistribution> sq_;
+
+      double qMax_;
    private:
 
       /// Maximum Miller index of wavevectors in grid.
@@ -143,19 +148,13 @@ namespace McMd
       /// Has readParam been called?
       bool    isInitialized_;
 
-      /// Log file
-      std::ofstream logFile_;
-
-      /// Is this the first step?
-      bool isFirstStep_;
    };
-
 
    /*
    * Serialize to/from an archive. 
    */
    template <class Archive>
-   void StructureFactorGrid::serialize(Archive& ar, const unsigned int version)
+   void PowderPatternSFGrid::serialize(Archive& ar, const unsigned int version)
    {
       StructureFactor::serialize(ar, version);
       ar & hMax_;

@@ -307,14 +307,14 @@ namespace McMd
       std::string commandFileName = filename + ".cmd";
       fileMaster().setCommandFileName(commandFileName);
 
-      #if UTIL_MPI
-      if (system().hasPerturbation()) {
+      //#if UTIL_MPI
+      //if (system().hasPerturbation()) {
          // Read one command file, after reading multiple restart files.
-         Util::Log::file() << "Set to use a single command file" 
-                           << std::endl;
-         setParamCommunicator();
-      }
-      #endif
+         //Util::Log::file() << "Set to use a single command file" 
+                           //<< std::endl;
+         //setParamCommunicator();
+      //}
+      //#endif
 
       isInitialized_ = true;
    }

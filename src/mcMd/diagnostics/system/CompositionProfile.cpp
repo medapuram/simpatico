@@ -107,8 +107,6 @@ namespace McMd
          }
       }
 
-      makeWaveVectors();
-
       // Clear accumulators
       for (int i = 0; i < nDirection_; ++i) {
          for (int j = 0; j < nAtomType_; ++j){
@@ -120,18 +118,17 @@ namespace McMd
  
    void CompositionProfile::sample(long iStep) 
    {
-      Vector blengths;
-
-      // Lengths of simulation box
-      blengths = system().boundary().lengths();
-
       if (isAtInterval(iStep))  {
 
+         Vector blengths;
          Vector  position;
          double  product;
          System::ConstMoleculeIterator  molIter;
          Molecule::ConstAtomIterator  atomIter;
          int  nSpecies, iSpecies, typeId;
+
+         makeWaveVectors();
+         blengths = system().boundary().lengths();
 
          // Loop over all atoms
          nSpecies = system().simulation().nSpecies();

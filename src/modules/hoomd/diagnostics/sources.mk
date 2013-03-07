@@ -1,4 +1,5 @@
 modules_hoomd_diagnostics_SRCS=$(SRC_DIR)/modules/hoomd/diagnostics/GPUStructureFactorGrid.cpp \
+                               $(SRC_DIR)/modules/hoomd/diagnostics/GPUPowderPatternSFGrid.cpp \
                                $(SRC_DIR)/modules/hoomd/diagnostics/HoomdDiagnosticFactory.cpp
 
 modules_hoomd_diagnostics_NVCC_SRCS=$(SRC_DIR)/modules/hoomd/diagnostics/GPUStructureFactorGrid.cu 
