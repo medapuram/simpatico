@@ -190,7 +190,7 @@ namespace Util
       double x, rho;
       for (int i=0; i < nBin_; ++i) {
          x   = min_ + binWidth_*(double(i) + 0.5);
-         rho = double(histogram_[i]);
+         rho = double(histogram_[i])/int(nSample_);
          out << Dbl(x, 18, 8) << Dbl(rho, 18, 8) << std::endl;
       }
    }

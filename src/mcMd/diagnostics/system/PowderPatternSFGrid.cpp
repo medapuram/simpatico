@@ -116,7 +116,7 @@ namespace McMd
          } 
       } else if (lattice_ == Tetragonal) {
 
-         nStar_ = (hMax_ + 1 )*(hMax_ + 1)*(hMax_ + 2)/2;
+         nStar_ = (hMax_ + 1)*(hMax_ + 1)*(hMax_ + 2)/2;
          starIds_.allocate(nStar_);
          starSizes_.allocate(nStar_);
          // Create tetragonal point group
@@ -186,7 +186,7 @@ namespace McMd
       }
      
       int bin;
-      bin = int(qMax_/0.001);
+      bin = int(qMax_/0.005);
 
       for (int i = 0; i < nMode_; ++i) {
          sq_[i].setParam(0.0, qMax_, bin);
@@ -281,16 +281,25 @@ namespace McMd
       StructureFactor::sample(iStep);
 
       double volume = system().boundary().volume();
-      double norm, value;
-      
-      for (int i = 0; i < nWave_; ++i) {
-         double q = waveVectors_[i].abs();
+      double norm;
+      for (int i = 0; i < nStar_; ++i) {
+         int size = starSizes_[i];
+         int k = starIds_[i];
+         double q = waveVectors_[k].abs();
          for (int j = 0; j < nMode_; ++j) {
-            norm = std::norm(fourierModes_(i, j));
-            value = norm/volume;
-            sq_[j].sample(value, q);
+            double average = 0.0;
+            double value = 0.0;
+            k = starIds_[i];
+            for (int m = 0; m < size; ++m) {
+               norm = std::norm(fourierModes_(k, j));
+               value = norm/volume;
+               average += value;
+               ++k;
+            }
+            average = average/double(size)/int(nSample_);
+            sq_[j].sample(average, q);
          }
-      }     
+      }
    } 
 
 

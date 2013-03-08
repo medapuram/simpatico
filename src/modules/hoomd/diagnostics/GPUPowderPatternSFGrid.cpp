@@ -103,24 +103,31 @@ namespace McMd
             maximumWaveIntVector_[j].insert(maximumWaveIntVector_[j].end(), 1, maxIntVector);
             maximumQ_[j].insert(maximumQ_[j].end(), 1, maxQ);
          }
- 
-         double value;
+         ++nSample_;
 
-         for (int i = 0; i < nWave_; ++i) {
-            double q = waveVectors_[i].abs();
+         double average;
+         for (int i = 0; i < nStar_; ++i) {
+            int size = starSizes_[i];
+            int k = starIds_[i];
+            double q = waveVectors_[k].abs();
             for (int j = 0; j < nMode_; ++j) {
-               value = (double) h_sq[j*nWave_+i];
-               sq_[j].sample(value, q);
+               double average = 0.0;
+               double value = 0.0;
+               k = starIds_[i];
+               for (int m = 0; m < size; ++m) {
+                  average += (double) h_sq[j*nWave_ + i];
+                  ++k;
+               }
+               average = average/double(size)/int(nSample_);
+                sq_[j].sample(average, q);
             }
          }
-
+ 
          delete [] h_wave_vectors;
          delete [] h_pos;
          delete [] h_mode;
          delete [] h_type;
          delete [] h_sq;
-
-          ++nSample_;
 
       }
    }    
