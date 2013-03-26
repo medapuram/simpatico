@@ -134,9 +134,11 @@ namespace McMd
       /// Number of stars of symmetry related wavevectors.
       int   nStar_;
 
-      DArray<ValueDistribution> sq_;
+      DArray< DArray<ValueDistribution> > sq_;
 
-      double qMax_;
+      int nBinWidth_;
+      DArray<double> qMax_;
+      DArray<double> binWidth_;
    private:
 
       /// Maximum Miller index of wavevectors in grid.

@@ -118,8 +118,13 @@ namespace McMd
                   average += (double) h_sq[j*nWave_ + i];
                   ++k;
                }
-               average = average/double(size)/int(nSample_);
-                sq_[j].sample(average, q);
+               average = average/double(size);
+               for (int k=0; k < nBinWidth_; ++k) {
+                  if (qMax_[k] <= q < qMax_[k+1]) {
+                     sq_[j][k].sample(average, q);
+                     break;
+                  }
+               }
             }
          }
  

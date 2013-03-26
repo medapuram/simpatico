@@ -24,8 +24,7 @@ namespace Util
       max_(0.0),
       binWidth_(0.0),
       nBin_(0),
-      nSample_(0),
-      nReject_(0)
+      nSample_()
    {  setClassName("ValueDistribution"); }
    
    /* 
@@ -37,8 +36,7 @@ namespace Util
       max_(other.max_),
       binWidth_(other.binWidth_),
       nBin_(other.nBin_),
-      nSample_(other.nSample_),
-      nReject_(other.nReject_)
+      nSample_()
    {
       if (nBin_ > 0) {
          assert(other.histogram_.capacity() != 0);
@@ -46,11 +44,14 @@ namespace Util
          for (int i=0; i < nBin_; ++i) {
             histogram_[i] = other.histogram_[i];
          }
+         nSample_.allocate(nBin_);
+         for (int i=0; i < nBin_; ++i) {
+            nSample_[i] = other.nSample_[i];
+         }
       } else {
          assert(nBin_ == 0);
          assert(histogram_.capacity() == 0);
-         assert(nSample_ == 0);
-         assert(nReject_ == 0);
+         assert(nSample_.capacity() == 0);
       }
    }
    
@@ -65,11 +66,11 @@ namespace Util
       // Check validity of other object
       if (other.nBin_ > 0) {
          assert(other.histogram_.capacity() != 0);
+         assert(other.nSample_.capacity() != 0);
       } else {
          assert(other.nBin_ == 0);
          assert(other.histogram_.capacity() == 0);
-         assert(other.nSample_ == 0);
-         assert(other.nReject_ == 0);
+         assert(other.nSample_.capacity() == 0);
       }
 
       // Assign primitive values
@@ -77,14 +78,16 @@ namespace Util
       max_      = other.max_;
       binWidth_ = other.binWidth_;
       nBin_     = other.nBin_;
-      nSample_  = other.nSample_;
-      nReject_  = other.nReject_;
 
       // Allocate and copy histogram, if necessary
       if (nBin_ > 0) {
          histogram_.allocate(nBin_);
          for (int i=0; i < nBin_; ++i) {
             histogram_[i] = other.histogram_[i];
+         }
+         nSample_.allocate(nBin_);
+         for (int i=0; i < nBin_; ++i) {
+            nSample_[i] = other.nSample_[i];
          }
       }
 
@@ -107,6 +110,7 @@ namespace Util
       read<int>(in,   "nBin", nBin_);
       binWidth_  = (max_ - min_)/double(nBin_);
       histogram_.allocate(nBin_);
+      nSample_.allocate(nBin_);
       clear();
    }
   
@@ -124,6 +128,7 @@ namespace Util
       nBin_  = nBin;
       binWidth_  = (max_ - min_)/double(nBin_);
       histogram_.allocate(nBin_);
+      nSample_.allocate(nBin_);
       clear();
    }  
    
@@ -136,13 +141,15 @@ namespace Util
       loadParameter<double>(ar, "max", max_);
       loadParameter<int>(ar, "nBin", nBin_);
       ar & nSample_;
-      ar & nReject_;
       ar & binWidth_;
       ar & histogram_;
 
       // Validate
       if (histogram_.capacity() != nBin_) {
          UTIL_THROW("Inconsistent histogram capacity");
+      }
+      if (nSample_.capacity() != nBin_) {
+         UTIL_THROW("Inconsistent nSample capacity");
       }
       if (!feq(binWidth_, (max_ - min_)/double(nBin_))) {
          UTIL_THROW("Inconsistent binWidth_");
@@ -160,10 +167,11 @@ namespace Util
    */
    void ValueDistribution::clear()
    {  
-      nSample_ = 0; 
-      nReject_ = 0; 
       for (int i=0; i < nBin_; ++i) {
          histogram_[i] = 0;
+      }
+      for (int i=0; i < nBin_; ++i) {
+         nSample_[i] = 0;
       }
    }
    
@@ -176,9 +184,7 @@ namespace Util
       if (binValue > min_ && binValue < max_) {
          i = binIndex(binValue);
          histogram_[i] += value;
-         nSample_ += 1;
-      } else {
-         nReject_ += 1;
+         nSample_[i] += 1;
       }
    }
    
@@ -189,9 +195,13 @@ namespace Util
    {
       double x, rho;
       for (int i=0; i < nBin_; ++i) {
-         x   = min_ + binWidth_*(double(i) + 0.5);
-         rho = double(histogram_[i])/int(nSample_);
-         out << Dbl(x, 18, 8) << Dbl(rho, 18, 8) << std::endl;
+         if (nSample_[i] != 0) {
+            x   = min_ + binWidth_*(double(i) + 0.5);
+            rho = double(histogram_[i])/int(nSample_[i]);
+            if (rho != 0) {
+               out << Dbl(x, 18, 8) << Dbl(rho, 18, 8) << std::endl;
+            }
+         }
       }
    }
 

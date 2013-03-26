@@ -144,8 +144,7 @@ namespace Util
       double  max_;             ///< maximum value.
       double  binWidth_;        ///< width of bin = (max_-min_)/nBin_ .
       int     nBin_;            ///< number of bins.
-      int     nSample_;         ///< Number of sampled values in Histogram.
-      int     nReject_;         ///< Number of sampled values that were out of range.
+      DArray<int>     nSample_;         ///< Number of sampled values in Histogram.
    
    };
 
@@ -191,7 +190,6 @@ namespace Util
       ar & max_;    
       ar & nBin_;     
       ar & nSample_;   
-      ar & nReject_;    
       ar & binWidth_;  
       ar & histogram_; 
 

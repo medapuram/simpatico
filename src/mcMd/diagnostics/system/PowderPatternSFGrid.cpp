@@ -46,10 +46,16 @@ namespace McMd
       readDMatrix<double>(in, "modes", modes_, nMode_, nAtomType_);
       read<int>(in, "hMax", hMax_);
       read<Util::LatticeSystem>(in, "lattice", lattice_);
-      read<double>(in, "qMax", qMax_);
+      read<int>(in, "nBinWidth", nBinWidth_);
+      qMax_.allocate(nBinWidth_+1);
+      readDArray<double>(in, "qMax", qMax_, nBinWidth_+1);
+      binWidth_.allocate(nBinWidth_);
+      readDArray<double>(in, "binWidth", binWidth_, nBinWidth_);
 
       // Allocate wavevectors arrays
       sq_.allocate(nMode_);
+      for (int i=0; i < nMode_; ++i) 
+         sq_[i].allocate(nBinWidth_);
       nWave_  = (2*hMax_ + 1)*(2*hMax_ + 1)*(2*hMax_ + 1);
       waveIntVectors_.allocate(nWave_);
       waveVectors_.allocate(nWave_);
@@ -185,11 +191,10 @@ namespace McMd
          maximumQ_[j].reserve(Samples);
       }
      
-      int bin;
-      bin = int(qMax_/0.005);
-
-      for (int i = 0; i < nMode_; ++i) {
-         sq_[i].setParam(0.0, qMax_, bin);
+      for (int i=0; i < nMode_; ++i) {
+         for (int j=0; j < nBinWidth_; ++j) { 
+            sq_[i][j].setParam(qMax_[j], qMax_[j+1], int(( qMax_[j+1]-qMax_[j] )/binWidth_[j]));
+         }
       }
 
       nSample_ = 0;
@@ -216,7 +221,9 @@ namespace McMd
       // Load additional from PowderPatternSFGrid::serialize
       loadParameter<int>(ar, "hMax", hMax_);
       loadParameter<Util::LatticeSystem>(ar, "lattice", lattice_);
-      loadParameter<double>(ar, "qMax", qMax_);
+      loadParameter<int>(ar, "nBinWidth", nBinWidth_);
+      ar & qMax_;
+      ar & binWidth_;
       ar & nStar_;
       ar & starIds_;
       ar & starSizes_;
@@ -240,6 +247,8 @@ namespace McMd
 
       // Allocate temporary data structures (defined in StructureFactor)
       sq_.allocate(nMode_);
+      for (int i=0; i < nMode_; ++i) 
+         sq_[i].allocate(nBinWidth_);
       waveVectors_.allocate(nWave_);
       fourierModes_.allocate(nWave_, nMode_);
 
@@ -251,6 +260,12 @@ namespace McMd
          maximumValue_[j].reserve(Samples);
          maximumWaveIntVector_[j].reserve(Samples);
          maximumQ_[j].reserve(Samples);
+      }
+      
+      for (int i=0; i < nMode_; ++i) {
+         for (int j=0; j < nBinWidth_; ++j) { 
+            sq_[i][j].setParam(qMax_[j], qMax_[j+1], int(( qMax_[j+1]-qMax_[j] )/binWidth_[j]));
+         }
       }
 
       isInitialized_ = true;
@@ -271,8 +286,10 @@ namespace McMd
       assert (nMode_ > 0);
 
       // Clear accumulators
-      for (int i = 0; i < nMode_; ++i) {
-         sq_[i].clear();
+      for (int i=0; i < nMode_; ++i) {
+         for (int j=0; j < nBinWidth_; ++j) { 
+            sq_[i][j].clear();
+         }
       }
    }
 
@@ -296,8 +313,13 @@ namespace McMd
                average += value;
                ++k;
             }
-            average = average/double(size)/int(nSample_);
-            sq_[j].sample(average, q);
+            average = average/double(size);
+            for (int k=0; k < nBinWidth_; ++k) {
+               if (qMax_[k] <= q < qMax_[k+1]) {
+                  sq_[j][k].sample(average, q);
+                  break;
+               } 
+            }
          }
       }
    } 
@@ -316,8 +338,9 @@ namespace McMd
       fileMaster().openOutputFile(outputFileName("_avg.dat"), outputFile_);
 
       for (i = 0; i < nMode_; ++i) {
-         sq_[i].output(outputFile_);
-         outputFile_ << std::endl;
+         for (int k=0; k < nBinWidth_; ++k) {
+            sq_[i][k].output(outputFile_);
+         }
       }
       outputFile_.close();
 
