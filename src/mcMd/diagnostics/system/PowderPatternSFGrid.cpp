@@ -193,7 +193,7 @@ namespace McMd
      
       for (int i=0; i < nMode_; ++i) {
          for (int j=0; j < nBinWidth_; ++j) { 
-            sq_[i][j].setParam(qMax_[j], qMax_[j+1], int(( qMax_[j+1]-qMax_[j] )/binWidth_[j]));
+            sq_[i][j].setParam(qMax_[j], qMax_[j+1], int((qMax_[j+1] - qMax_[j])/binWidth_[j]) );
          }
       }
 
@@ -264,7 +264,7 @@ namespace McMd
       
       for (int i=0; i < nMode_; ++i) {
          for (int j=0; j < nBinWidth_; ++j) { 
-            sq_[i][j].setParam(qMax_[j], qMax_[j+1], int(( qMax_[j+1]-qMax_[j] )/binWidth_[j]));
+            sq_[i][j].setParam(qMax_[j], qMax_[j+1], int((qMax_[j+1] - qMax_[j])/binWidth_[j]) );
          }
       }
 
