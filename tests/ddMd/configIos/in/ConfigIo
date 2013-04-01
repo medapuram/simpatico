@@ -19,6 +19,7 @@ DdMdConfigIo{
   bondCacheCapacity      100
 }
 
+
 AngleStorage{
   capacity            50
   totalCapacity      100

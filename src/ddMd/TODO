@@ -5,28 +5,20 @@ Testing
 
 - Fix obsolete PairPotentialTest (change interface for PairPotential)
 
-- Test angles and dihedrals (stress calculation and conservation of energy).
+- Test angle and dihedral stress calculations.
 
-Restart
--------
+Initial Ghost Exchange
+----------------------
 
-- Add restart capability, based on save / load methods. 
-
-- Use new BinaryMpiIArchive for reading. The new Archive will have a broadcast
-  mode that will read one one processor and broadcast parameters, as for the
-  existing ParamComposite::read*() methods.
-
-Hybrid MD
----------
-
-- Finish and test transactions in AtomStorage (in transactions branch).
-
-- Add transactions to GroupStorage (in transactions branch).
+- Add exchangeGhosts method to AtomDistributor that distributes the 
+  groups among neighboring processors without sending many unnecessary 
+  ghosts (to decrease memory requirements).
 
 Dynamic Resizing
 ----------------
 
 - Allow for dynamic resizing of Storage classes.
+  For AtomStorage, must emit signal to reset pointers to atoms.
 
 - Allow for dynamic resizing of Buffer class.
 
@@ -35,6 +27,18 @@ Flexible Unit Cells:
 
 - Generalize makeSnapShot and needsExchange methods in AtomStorage to 
   allow for deforming boundaries (requires further changes to Boundary).
+
+Restart
+-------
+
+- Add ddMd restart capability, based on save / load methods. 
+
+Hybrid MD
+---------
+
+- Finish and test transactions in AtomStorage (in transactions branch).
+
+- Add transactions to GroupStorage (in transactions branch).
 
 Distributor and Collector:
 --------------------------
@@ -59,8 +63,8 @@ Buffer:
   For groups, add enumerations BOND, ANGLE, DIHEDRAL and
   use Type = Buffer::BOND + N - 2 in templates for Group<N>. 
 
-- In beginSendBlock() method, add parametr itemSize and
-  remove parameter groupSize.
+- In beginSendBlock() method, add parametr itemSize and remove 
+  parameter groupSize.
 
 - Make pack/unpack methods public. 
 
@@ -90,11 +94,6 @@ Single Processor Operation
 - Modify Distributor, Collector, ConfigIo, and Exchanger classes 
   to work ifndef UTIL_MPI, continue with other classes, to enable 
   single processor operation with no MPI.
-
-Atom Class Implementation
---------------------------
-
-- see doc/notes/ddMd/Atom file
 
 Files
 -----

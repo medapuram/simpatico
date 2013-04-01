@@ -21,18 +21,15 @@ namespace Inter
    using namespace Util;
 
    /**
-   * A clipped cosine potential that induces lamellar ordering
-   * along the direction specified by perpDirection_.
-   *    perpDirection_ = 0: x direction
-   *                   = 1: y direction
-   *                   = 2: z direction
+   * A clipped cosine potential that induces ordering
+   * along directions specified by waveIntVectors, w_i.
    *
-   *                                                  /                   /                   z   \ \
-   *  u = prefactor[atomType] externalParameter tanh | clipParameter cos | 2  pi periodicity ---   | |
-   *                                                  \                   \                   Lz  / / 
+   *                                                 /                   /     /      w_i.x     w_i.y     w_i.z  \  \  \
+   * u = prefactor[atomType] externalParameter tanh | clipParameter Sum | cos | 2 pi ------- + ------- + -------  |  |  |
+   *                                                 \               i   \     \        Lx        Ly        Lz   /  /  /
    *
-   * Prefactor (which depends on the atomType), externalParameter, interfaceWidth (relative to the box length 
-   * along the direction perpendicular to lamellae) and periodicity are given as inputs in the parameter file. 
+   * Prefactor (which depends on the atomType), externalParameter, waveIntVectors, interfaceWidth and periodicity
+   * are given as inputs in the parameter file. 
    * ClipParameter is the inverse of 2*pi*periodicity*interfaceWidth. 
    *
    * \ingroup Inter_External_Module

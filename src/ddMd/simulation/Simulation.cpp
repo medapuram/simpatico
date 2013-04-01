@@ -28,12 +28,10 @@
 #include <ddMd/potentials/bond/BondFactory.h>
 #ifdef INTER_ANGLE
 #include <ddMd/potentials/angle/AnglePotential.h>
-#include <ddMd/potentials/angle/AnglePotentialImpl.h>
 #include <ddMd/potentials/angle/AngleFactory.h>
 #endif
 #ifdef INTER_DIHEDRAL
 #include <ddMd/potentials/dihedral/DihedralPotential.h>
-#include <ddMd/potentials/dihedral/DihedralPotentialImpl.h>
 #include <ddMd/potentials/dihedral/DihedralFactory.h>
 #endif
 #ifdef INTER_EXTERNAL
@@ -395,6 +393,9 @@ namespace DdMd
       #ifndef DDMD_NOPAIR
       // Pair Potential
       pairPotentialPtr_ = pairFactory().factory(pairStyle());
+      if (!pairPotentialPtr_) {
+         UTIL_THROW("Unknown pairStyle");
+      }
       pairPotentialPtr_->setNAtomType(nAtomType_);
       readParamComposite(in, *pairPotentialPtr_);
       pairPotentialPtr_->setReverseUpdateFlag(reverseUpdateFlag_);
@@ -402,6 +403,9 @@ namespace DdMd
 
       // Bond Potential
       bondPotentialPtr_ = bondFactory().factory(bondStyle());
+      if (!bondPotentialPtr_) {
+         UTIL_THROW("Unknown bondStyle");
+      }
       bondPotentialPtr_->setNBondType(nBondType_);
       readParamComposite(in, *bondPotentialPtr_);
 
@@ -409,6 +413,9 @@ namespace DdMd
       // Angle potential
       if (nAngleType_) {
          anglePotentialPtr_ = angleFactory().factory(angleStyle());
+         if (!anglePotentialPtr_) {
+            UTIL_THROW("Unknown angleStyle");
+         }
          anglePotentialPtr_->setNAngleType(nAngleType_);
          readParamComposite(in, *anglePotentialPtr_);
       }
@@ -418,6 +425,9 @@ namespace DdMd
       // Dihedral potential
       if (nDihedralType_) {
          dihedralPotentialPtr_ = dihedralFactory().factory(dihedralStyle());
+         if (!dihedralPotentialPtr_) {
+            UTIL_THROW("Unknown dihedralStyle");
+         }
          dihedralPotentialPtr_->setNDihedralType(nDihedralType_);
          readParamComposite(in, *dihedralPotentialPtr_);
       }
@@ -451,7 +461,7 @@ namespace DdMd
       exchanger_.setPairCutoff(pairPotentialPtr_->cutoff());
       exchanger_.allocate();
 
-      // Set signals
+      // Set signal observers (i.e., call-back functions for Signal::notify)
       modifySignal().addObserver(*this, &Simulation::unsetKineticEnergy );
       modifySignal().addObserver(*this, &Simulation::unsetKineticStress );
       modifySignal().addObserver(*this, &Simulation::unsetPotentialEnergies );
@@ -462,15 +472,31 @@ namespace DdMd
 
       positionSignal().addObserver(*this, &Simulation::unsetPotentialEnergies );
       positionSignal().addObserver(*this, &Simulation::unsetVirialStress );
+
+      // Add observerse to exchangeSignal
+      if (nBondType_) {
+         void (BondStorage::*memberPtr)() = &BondStorage::unsetNTotal;
+         exchangeSignal().addObserver(bondStorage_, memberPtr);
+      }
+      #ifdef INTER_ANGLE
+      if (nAngleType_) {
+         void (AngleStorage::*memberPtr)() = &AngleStorage::unsetNTotal;
+         exchangeSignal().addObserver(angleStorage_, memberPtr);
+      }
+      #endif
+      #ifdef INTER_DIHEDRAL
+      if (nDihedralType_) {
+         void (DihedralStorage::*memberPtr)() = &DihedralStorage::unsetNTotal;
+         exchangeSignal().addObserver(dihedralStorage_, memberPtr);
+      }
+      #endif
    }
 
    /*
-   * If no FileMaster exists, create and initialize one. 
+   * Read the FileMaster parameters.
    */
    void Simulation::readFileMaster(std::istream &in)
-   {
-      readParamComposite(in, *fileMasterPtr_);
-   }
+   {  readParamComposite(in, *fileMasterPtr_); }
 
    /*
    * Read potential style strings and maskedPairPolicy.
@@ -595,8 +621,15 @@ namespace DdMd
          } else
          if (command == "OUTPUT_MEMORY_STATS") {
             // Output statistics about memory usage during simulation.
+            // Also clears statistics after printing output
             atomStorage().computeStatistics(domain_.communicator());
             bondStorage().computeStatistics(domain_.communicator());
+            #ifdef INTER_ANGLE
+            angleStorage().computeStatistics(domain_.communicator());
+            #endif
+            #ifdef INTER_DIHEDRAL
+            dihedralStorage().computeStatistics(domain_.communicator());
+            #endif
             buffer().computeStatistics(domain_.communicator());
             pairPotential().pairList().computeStatistics(domain_.communicator());
             if (domain_.isMaster()) {
@@ -606,6 +639,18 @@ namespace DdMd
                pairPotential().pairList().outputStatistics(Log::file());
                Log::file() << std::endl;
             }
+
+            atomStorage().clearStatistics();
+            bondStorage().clearStatistics();
+            #ifdef INTER_ANGLE
+            angleStorage().clearStatistics();
+            #endif
+            #ifdef INTER_DIHEDRAL
+            dihedralStorage().clear(domain_.communicator());
+            #endif
+            buffer().clearStatistics();
+            pairPotential().pairList().clearStatistics();
+            
          } else
          if (command == "CLEAR_INTEGRATOR") {
             // Clear timing, memory statistics and diagnostic accumulators.
@@ -649,7 +694,7 @@ namespace DdMd
             bondPotential().set(paramName, typeId, value);
          } else 
          #ifdef INTER_ANGLE
-         if (command == "SET_ANGLE") {
+         if (command == "SET_ANGLE" && nAngleType_) {
             // Modify one parameter of an angle interaction.
             std::string paramName;
             int typeId; 
@@ -659,7 +704,7 @@ namespace DdMd
          } else 
          #endif
          #ifdef INTER_DIHEDRAL
-         if (command == "SET_DIHEDRAL") {
+         if (command == "SET_DIHEDRAL" && nDihedralType_) {
             // Modify one parameter of a dihedral interaction.
             std::string paramName;
             int typeId; 
@@ -814,7 +859,7 @@ namespace DdMd
       integratorPtr_->run(nStep);
    }
 
-   // Kinetic Energy methods ------------------------------------------------------
+   // Kinetic Energy methods -------------------------------------------------
 
    /*
    * Calculate total kinetic energy (call on all processors).
@@ -866,7 +911,7 @@ namespace DdMd
    void Simulation::unsetKineticEnergy()
    {  kineticEnergy_.unset(); }
 
-   // Kinetic Stress methods ------------------------------------------------------
+   // Kinetic Stress methods -------------------------------------------------
    
    /*
    * Compute total kinetic stress, store on master proc.
@@ -942,7 +987,7 @@ namespace DdMd
    void Simulation::unsetKineticStress()
    {  kineticStress_.unset(); }
 
-   // Potential Energy Methods ------------------------------------------------------
+   // Potential Energy Methods -----------------------------------------------
    
    #ifdef UTIL_MPI
 
@@ -1009,7 +1054,7 @@ namespace DdMd
    */ 
 
    /*
-   * Compute all potential energy contributions.
+   * Return sum of potential energy contributions.
    */
    double Simulation::potentialEnergy() const
    {
@@ -1045,17 +1090,21 @@ namespace DdMd
       pairPotential().unsetEnergy();
       bondPotential().unsetEnergy();
       #ifdef INTER_ANGLE
-      anglePotential().unsetEnergy();
+      if (nAngleType_) {
+         anglePotential().unsetEnergy();
+      }
       #endif
       #ifdef INTER_DIHEDRAL
-      dihedralPotential().unsetEnergy();
+      if (nDihedralType_) {
+         dihedralPotential().unsetEnergy();
+      }
       #endif
       #ifdef INTER_EXTERNAL
       externalPotential().unsetEnergy();
       #endif
    }
 
-   // Virial Stress Methods ------------------------------------------------------
+   // Virial Stress Methods --------------------------------------------------
    
    #ifdef UTIL_MPI
    /*
@@ -1067,12 +1116,12 @@ namespace DdMd
       bondPotential().computeStress(domain_.communicator());
       #ifdef INTER_ANGLE
       if (nAngleType_) {
-         //anglePotential().computeStress(domain_.communicator());
+         anglePotential().computeStress(domain_.communicator());
       }
       #endif
       #ifdef INTER_DIHEDRAL
       if (nDihedralType_) {
-         //dihedralPotential().computeStress(domain_.communicator());
+         dihedralPotential().computeStress(domain_.communicator());
       }
       #endif
    }
@@ -1088,19 +1137,19 @@ namespace DdMd
       bondPotential().computeStress();
       #ifdef INTER_ANGLE
       if (nAngleType_) {
-         //anglePotential().computeStress();
+         anglePotential().computeStress();
       }
       #endif
       #ifdef INTER_DIHEDRAL
       if (nDihedralType_) {
-         //dihedralPotential().computeStress();
+         dihedralPotential().computeStress();
       }
       #endif
    }
    #endif
 
    /*
-   * Compute all potential stress contributions.
+   * Return total virial stress.
    */
    Tensor Simulation::virialStress() const
    {
@@ -1144,7 +1193,6 @@ namespace DdMd
    }
 
    #ifdef UTIL_MPI
-
    /*
    * Compute all pair energy contributions.
    */
@@ -1152,9 +1200,7 @@ namespace DdMd
    {
       pairPotential().computePairEnergies(domain_.communicator());
    }
-
    #else
-
    /*
    * Compute all pair energy contributions.
    */
@@ -1162,7 +1208,6 @@ namespace DdMd
    {
       pairPotential().computePairEnergies();
    }
-
    #endif
 
    /*
@@ -1176,7 +1221,6 @@ namespace DdMd
       return pairEnergies;
    }
 
-
    /*
    * Mark all potential energies as unknown.
    */
@@ -1185,14 +1229,18 @@ namespace DdMd
       pairPotential().unsetStress();
       bondPotential().unsetStress();
       #ifdef INTER_ANGLE
-      anglePotential().unsetStress();
+      if (nAngleType_) {
+         anglePotential().unsetStress();
+      }
       #endif
       #ifdef INTER_DIHEDRAL
-      dihedralPotential().unsetStress();
+      if (nDihedralType_) {
+         dihedralPotential().unsetStress();
+      }
       #endif
    }
 
-   // Config File Read and Write -------------------------------------
+   // Config File Read and Write ---------------------------------------------
 
    /*
    * Read configuration file on master and distribute atoms.
@@ -1251,7 +1299,7 @@ namespace DdMd
       }
    }
 
-   // Potential Factories and Styles -------------------------------------
+   // Potential Factories and Styles ----------------------------------------
    
    #ifndef DDMD_NOPAIR
    /*
@@ -1351,7 +1399,7 @@ namespace DdMd
    {  return externalStyle_;  }
    #endif
 
-   // Integrator and ConfigIo Management -------------------------------
+   // Integrator and ConfigIo Management ------------------------------------
    
    /*
    * Return the IntegratorFactory by reference.
@@ -1402,7 +1450,7 @@ namespace DdMd
       configIoPtr_->initialize();
    }
 
-   // Validation ------------------------------------------------------
+   // Validation ------------------------------------------------------------
    
    /*
    * Return true if this Simulation is valid, or throw an Exception.
@@ -1457,13 +1505,13 @@ namespace DdMd
 
       // Test consistency of computed potential energies and stresses
       #ifdef UTIL_MPI
-      pairPotentialPtr_->isValid(domain_.communicator());
-      bondPotentialPtr_->isValid(domain_.communicator());
+      pairPotential().isValid(domain_.communicator());
+      bondPotential().isValid(domain_.communicator());
       #ifdef INTER_ANGLE
-      anglePotentialPtr_->isValid(domain_.communicator());
+      anglePotential().isValid(domain_.communicator());
       #endif
       #ifdef INTER_DIHEDRAL
-      dihedralPotentialPtr_->isValid(domain_.communicator());
+      dihedralPotential().isValid(domain_.communicator());
       #endif
       #endif // ifdef UTIL_MPI
 
