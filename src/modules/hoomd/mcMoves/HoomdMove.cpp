@@ -44,6 +44,7 @@
 #include <hoomd/ParticleGroup.h>
 #include <hoomd/IntegratorTwoStep.h>
 #include <hoomd/TwoStepNVEGPU.h>
+#include <hoomd/TwoStepNPTMTKGPU.h>
 #include <hoomd/SFCPackUpdater.h>
 #include <hoomd/NeighborList.h>
 

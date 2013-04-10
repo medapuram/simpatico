@@ -26,6 +26,7 @@
 #include <hoomd/SystemDefinition.h>
 #include <hoomd/PotentialExternalGPU.h>
 #include <hoomd/HOOMDMath.h>
+#include <hoomd/BoxDim.h>
 
 #include "HoomdExternalPotential.h"
 
@@ -52,7 +53,7 @@ namespace McMd
    public:
 
       typedef typename hoomd_evaluator::param_type param_type;
- 
+
       /**
       * Default constructor.
       */
@@ -192,8 +193,8 @@ namespace McMd
          scaledPosition[i] = position[i]/lengths[i];
       }
       Scalar3 X = make_scalar3(scaledPosition[0], scaledPosition[1], scaledPosition[2]);
-      
-      hoomd_evaluator eval(X, lengths[0], lengths[1], lengths[2], params_[i]);
+      BoxDim box(lengths[0], lengths[1], lengths[2]);
+      hoomd_evaluator eval(X, box, params_[i]);
       Scalar3 Force;
       Scalar energy = 0;
       Scalar virial[6];
@@ -219,7 +220,8 @@ namespace McMd
          scaledPosition[i] = position[i]/lengths[i];
       }
       Scalar3 X = make_scalar3(scaledPosition[0], scaledPosition[1], scaledPosition[2]);
-      hoomd_evaluator eval(X, lengths[0], lengths[1], lengths[2], params_[i]);
+      BoxDim box(lengths[0], lengths[1], lengths[2]);
+      hoomd_evaluator eval(X, box, params_[i]);
       Scalar3 Force;
       Scalar energy = 0;
       Scalar virial[6];

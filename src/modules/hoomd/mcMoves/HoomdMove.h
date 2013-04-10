@@ -42,6 +42,9 @@ namespace McMd
    #ifdef HOOMD_DEVEL
    class HoomdBondPotential;
    #endif
+   #ifdef INTER_EXTERNAL
+   class HoomdExternalPotential;
+   #endif
 
    /**
    * HoomdMove is a hybrid Molecular Dynamics MC move that uses HOOMD
