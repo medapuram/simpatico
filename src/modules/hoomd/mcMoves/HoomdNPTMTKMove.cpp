@@ -111,12 +111,23 @@ namespace McMd
       // create NVE Integrator 
       integratorSPtr_ = boost::shared_ptr<IntegratorTwoStep>(new IntegratorTwoStep(systemDefinitionSPtr_,dt_));
 
-      boost::shared_ptr<Variant> variantTSPtr(new VariantConst(system().energyEnsemble().temperature()));
+      boost::shared_ptr<Variant> variantTSPtr(new VariantConst(1.0));
       boost::shared_ptr<Variant> variantPSPtr(new VariantConst(system().boundaryEnsemble().pressure()));
+
+      Species  *speciesPtr;
+      int       iSpec, nMolecule;
+      int       nAtom = 0;
+      for (int iSpec=0; iSpec < simulation().nSpecies(); ++iSpec) {
+         speciesPtr = &simulation().species(iSpec);
+         nMolecule  = system().nMolecule(iSpec);
+         nAtom += nMolecule*(speciesPtr->nAtom());
+      }
+      thermoSPtr_->setNDOF(3.0*nAtom);
 
       // create IntegrationMethod
       twoStepNPTMTKGPUSPtr_ = boost::shared_ptr<TwoStepNPTMTKGPU>(new TwoStepNPTMTKGPU(systemDefinitionSPtr_, groupAllSPtr_, thermoSPtr_, 
-                                                                                        1.0, tauP_, variantTSPtr, variantPSPtr, couplingMode_, true));
+                                                                                       1.0, tauP_, variantTSPtr, variantPSPtr, couplingMode_, 
+                                                                                       TwoStepNPTMTKGPU::baro_x | TwoStepNPTMTKGPU::baro_y | TwoStepNPTMTKGPU::baro_z, true));
 
       integratorSPtr_->addIntegrationMethod(twoStepNPTMTKGPUSPtr_);
 
@@ -171,7 +182,6 @@ namespace McMd
       Boundary boundary = system().boundary();
       lengths_ = boundary.lengths();
       const Scalar3 boundaryLengths = make_scalar3(lengths_[0], lengths_[1], lengths_[2]);
-      std::cout << "boundary is " << lengths_[0] << " " << lengths_[1] << " " << lengths_[2] << std::endl;
       box.setL(boundaryLengths);
 
       particleDataSPtr_->setGlobalBoxL(boundaryLengths);
@@ -214,7 +224,7 @@ namespace McMd
       Random& random = simulation().random();
       double temp = energyEnsemble().temperature();
       Species  *speciesPtr;
-      int       iSpec, nMolecule;
+      int       nMolecule;
       int       nAtom = 0;
       for (int iSpec=0; iSpec < simulation().nSpecies(); ++iSpec) {
          speciesPtr = &simulation().species(iSpec);
@@ -224,22 +234,41 @@ namespace McMd
       if (couplingMode_ == TwoStepNPTMTKGPU::couple_xyz) {
          // one degree of freedom
          // barostat_energy = 1/2 (1/W) eta_x^2
-         double sigma = sqrt( temp/(tauP_*tauP_*3.0*temp*nAtom) );
+         double sigma = sqrt( temp/(tauP_*tauP_*temp*3.0*nAtom) );
          etax = sigma*random.gaussian();
+         etay = etax;
+         etaz = etax;
       } else if (couplingMode_ == TwoStepNPTMTKGPU::couple_none) {
          // three degrees of freedom 
          // barostat_energy = 1/2 (1/W) (eta_x^2 + eta_y^2 + eta_z^2)
-         double sigma = sqrt( temp/(tauP_*tauP_*3.0*temp*nAtom) );
+         double sigma = sqrt( temp/(tauP_*tauP_*temp*3.0*nAtom) );
          etax = sigma*random.gaussian();
          etay = sigma*random.gaussian();
          etaz = sigma*random.gaussian();
       } else {
          // two degrees of freedom
          // barostat_energy = 1/2 (1/W) eta_x^2 + 1/2 (1/(2W)) eta_y^2
-         double sigma1 = sqrt( temp/(tauP_*tauP_*3.0*temp*nAtom) );
-         etax = sigma1*random.gaussian();
-         double sigma2 = sqrt( temp/(tauP_*tauP_*3.0*temp*nAtom)/2.0 );
-         etay = sigma2*random.gaussian();
+         double sigma1 = sqrt( temp/(tauP_*tauP_*temp*3.0*nAtom) );
+         double eta1 = sigma1*random.gaussian();
+         double sigma2 = sqrt( temp/(tauP_*tauP_*temp*3.0*nAtom)/2.0 );
+         double eta2 = sigma2*random.gaussian();
+         if (couplingMode_ == TwoStepNPTMTKGPU::couple_xy) {
+            etax = eta2;
+            etay = eta2;
+            etaz = eta1;
+         } else
+         if (couplingMode_ == TwoStepNPTMTKGPU::couple_yz) {
+            etax = eta1;
+            etay = eta2;
+            etaz = eta2;
+         } else 
+         if (couplingMode_ == TwoStepNPTMTKGPU::couple_xz) {
+            etax = eta2;
+            etay = eta1;
+            etaz = eta2;
+         } else { 
+           UTIL_THROW("Unsupported coupling mode.");
+         }
       }
       twoStepNPTMTKGPUSPtr_->setEta(etax,etay,etaz);
 
@@ -276,8 +305,6 @@ namespace McMd
       newLengths[1] = (box.getL()).y;
       newLengths[2] = (box.getL()).z;
       volume = newLengths[0]*newLengths[1]*newLengths[2];
-      std::cout << "new boundary is " << newLengths[0] << " " << newLengths[1] << " " << newLengths[2] << std::endl;
- 
 
       // Calculate new value of the conserved quantity
       thermoSPtr_->compute(nStep_);

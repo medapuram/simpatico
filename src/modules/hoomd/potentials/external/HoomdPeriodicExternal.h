@@ -1,6 +1,6 @@
 #ifdef INTER_EXTERNAL
-#ifndef HOOMD_LAMELLAR_ORDERING_EXTERNAL_H
-#define HOOMD_LAMELLAR_ORDERING_EXTERNAL_H
+#ifndef HOOMD_PERIODIC_EXTERNAL_H
+#define HOOMD_PERIODIC_EXTERNAL_H
 
 /*
 * Simpatico - Simulation Package for Polymeric and Molecular Liquids
@@ -17,15 +17,15 @@
 
 namespace McMd
 {
-   extern char classNameHoomdLamellarOrdering[];
+   extern char classNameHoomdPeriodic[];
 
    /**
    * A potential encapsulating the HOOMD Periodic evaluator
    *
    * \ingroup External_Module
    */
-   class HoomdLamellarOrderingExternal : public HoomdExternal< EvaluatorPeriodicExternal,
-      gpu_compute_periodic_forces, classNameHoomdLamellarOrdering >
+   class HoomdPeriodicExternal : public HoomdExternal< EvaluatorPeriodicExternal,
+      gpu_compute_periodic_forces, classNameHoomdPeriodic >
    {
    
    public:
@@ -33,12 +33,12 @@ namespace McMd
       /**
       * Default constructor.
       */
-      HoomdLamellarOrderingExternal();
+      HoomdPeriodicExternal();
 
       /**
       * Copy constructor
       */
-      HoomdLamellarOrderingExternal(const HoomdLamellarOrderingExternal& other);
+      HoomdPeriodicExternal(const HoomdPeriodicExternal& other);
 
       /**
       * read parameters from file
@@ -65,19 +65,17 @@ namespace McMd
 
    private:
 
-      /// Index representing the direction perpendicular to the lamellae.
-      int perpDirection_;
-
-      /// Interfacial width in periodic phase.
-      double width_;
-
       /// per-type prefactor of potential
       DArray<double> prefactor_;
 
       /// external parameter
       double externalParameter_;
 
-      /// Number of periods in a cell
+      /// Array of Miller index IntVectors for the reciprocal lattice vectors.
+      DArray<IntVector>  waveIntVectors_;
+
+      double interfaceWidth_;
+
       int periodicity_;
    };
   

@@ -20,7 +20,7 @@ namespace McMd
    * Default constructor.
    */
    HoomdLamellarOrderingExternal::HoomdLamellarOrderingExternal()   
-    : HoomdExternal< EvaluatorExternalPeriodic, gpu_compute_periodic_forces, classNameHoomdLamellarOrdering >()
+    : HoomdExternal< EvaluatorPeriodicExternal, gpu_compute_periodic_forces, classNameHoomdLamellarOrdering >()
    {
    }
 
@@ -28,7 +28,7 @@ namespace McMd
    * Copy constructor
    */
    HoomdLamellarOrderingExternal::HoomdLamellarOrderingExternal(const HoomdLamellarOrderingExternal& other)
-    : HoomdExternal< EvaluatorExternalPeriodic, gpu_compute_periodic_forces, 
+    : HoomdExternal< EvaluatorPeriodicExternal, gpu_compute_periodic_forces, 
           classNameHoomdLamellarOrdering >(other)
    {
       externalParameter_ = other.externalParameter_;
