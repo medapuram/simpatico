@@ -28,7 +28,7 @@ namespace McMd
 
       if (className == "HoomdMove") {
         spp = new HoomdMove(system());
-      }          
+      } else          
       if (className == "HoomdNPTMTKMove") {
         spp = new HoomdNPTMTKMove(system());           
       }

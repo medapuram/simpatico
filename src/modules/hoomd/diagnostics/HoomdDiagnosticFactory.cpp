@@ -9,6 +9,7 @@
 
 #include "GPUStructureFactorGrid.h"
 #include "GPUPowderPatternSFGrid.h"
+#include "GPUAsymmSFGrid.h"
 
 namespace McMd
 {
@@ -36,6 +37,9 @@ namespace McMd
       } else
       if (className == "GPUPowderPatternSFGrid") {
          ptr = new GPUPowderPatternSFGrid(*systemPtr_);
+      } else
+      if (className == "GPUAsymmSFGrid") {
+         ptr = new GPUAsymmSFGrid(*systemPtr_);
       } 
 
       return ptr;
