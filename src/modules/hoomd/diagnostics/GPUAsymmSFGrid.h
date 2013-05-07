@@ -8,7 +8,7 @@
 * Distributed under the terms of the GNU General Public License.
 */
 
-#include <mcMd/diagnostics/system/AsymmSfGrid.h>
+#include <mcMd/diagnostics/system/StructureFactorGrid.h>
 
 /** 
  * This class calculates the static structure factor on the GPU.
@@ -18,7 +18,7 @@ namespace McMd
 
    using namespace Util;
 
-   class GPUAsymmSfGrid : public AsymmSfGrid
+   class GPUAsymmSFGrid : public StructureFactorGrid
    {
 
    public:
@@ -28,7 +28,7 @@ namespace McMd
       *
       * \param system reference to parent System object
       */
-      GPUAsymmSfGrid(System &system);
+      GPUAsymmSFGrid(System &system);
 
       /**
       * Add particles to StructureFactor accumulators.

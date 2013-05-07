@@ -1,6 +1,6 @@
-#include "GPUAsymmSfGrid.h"
+#include "GPUAsymmSFGrid.h"
 
-#include "GPUAsymmSfGrid.cuh"
+#include "GPUAsymmSFGrid.cuh"
 #include "cudacpu_vector_types.h"
 #include "cudacpu_vector_functions.h"
 
@@ -10,13 +10,13 @@ namespace McMd
    using namespace Util;
 
    /// Constructor.
-   GPUAsymmSfGrid::GPUAsymmSfGrid(System& system) 
-    : AsymmSfGrid(system)
+   GPUAsymmSFGrid::GPUAsymmSFGrid(System& system) 
+    : StructureFactorGrid(system)
    {}
 
 
    /// Increment Structure Factor
-   void GPUAsymmSfGrid::sample(long iStep)
+   void GPUAsymmSFGrid::sample(long iStep)
    {
       if (isAtInterval(iStep))  {
   
