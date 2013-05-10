@@ -188,7 +188,11 @@ namespace McMd
       const Vector& position, int i, Vector& force) const
    {
       Vector lengths = boundaryPtr_->lengths();
-      Scalar3 X = make_scalar3(position[0], position[1], position[2]);
+      Vector hoomdPosition;
+      for (int i=0; i < Dimension; ++i) {
+         hoomdPosition[i] = position[i]/lengths[i];
+      }
+      Scalar3 X = make_scalar3(hoomdPosition[0], hoomdPosition[1], hoomdPosition[2]);
       BoxDim box(lengths[0], lengths[1], lengths[2]);
       hoomd_evaluator eval(X, box, params_[i]);
       Scalar3 Force;
@@ -211,7 +215,11 @@ namespace McMd
       const Vector& position, int i) const
    {
       Vector lengths = boundaryPtr_->lengths();
-      Scalar3 X = make_scalar3(position[0], position[1], position[2]);
+      Vector hoomdPosition;
+      for (int i=0; i < Dimension; ++i) {
+         hoomdPosition[i] = position[i]/lengths[i];
+      }
+      Scalar3 X = make_scalar3(hoomdPosition[0], hoomdPosition[1], hoomdPosition[2]);
       BoxDim box(lengths[0], lengths[1], lengths[2]);
       hoomd_evaluator eval(X, box, params_[i]);
       Scalar3 Force;

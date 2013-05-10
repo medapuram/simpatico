@@ -283,7 +283,7 @@ namespace McMd
       // H = U + PV + barostat_energy
       thermoSPtr_->compute(0);
       double oldH = thermoSPtr_->getLogValue("kinetic_energy",0);
-      //oldH += thermoSPtr_->getLogValue("potential_energy",0);
+      oldH += thermoSPtr_->getLogValue("potential_energy",0);
       oldH += system().boundaryEnsemble().pressure() * volume;
       oldH += integratorSPtr_->getLogValue("npt_barostat_energy",0);
       //std::cout << "oldH kinetic is " << thermoSPtr_->getLogValue("kinetic_energy",0) << std::endl;
@@ -312,7 +312,7 @@ namespace McMd
       // Calculate new value of the conserved quantity
       thermoSPtr_->compute(nStep_);
       double newH = thermoSPtr_->getLogValue("kinetic_energy",nStep_);
-      //newH += thermoSPtr_->getLogValue("potential_energy",nStep_);
+      newH += thermoSPtr_->getLogValue("potential_energy",nStep_);
       newH += system().boundaryEnsemble().pressure() * volume;
       newH += integratorSPtr_->getLogValue("npt_barostat_energy",nStep_);
       //std::cout << "newH kinetic is " << thermoSPtr_->getLogValue("kinetic_energy",nStep_) << std::endl;

@@ -175,19 +175,27 @@ namespace Inter
    inline double PeriodicExternal::energy(const Vector& position, int type) const
    {
       const Vector cellLengths = boundaryPtr_->lengths();
-      double clipParameter = 1.0/(2.0*M_PI*periodicity_*interfaceWidth_);
-
       double cosine = 0.0;
       for (int i = 0; i < nWaveVectors_; ++i) {
          Vector q;
          q[0] = 2.0*M_PI*waveIntVectors_[i][0]/cellLengths[0];
          q[1] = 2.0*M_PI*waveIntVectors_[i][1]/cellLengths[1]; 
          q[2] = 2.0*M_PI*waveIntVectors_[i][2]/cellLengths[2];
-         double arg;
+         double arg, clipParameter;
          arg = q.dot(position);
-         cosine += cos(arg);
+         double qLengths = q.dot(cellLengths);
+         if (waveIntVectors_[i][0] != 0 || waveIntVectors_[i][1] != 0 || waveIntVectors_[i][2] != 0) {
+            clipParameter = 1.0/(interfaceWidth_*qLengths);
+         } else {
+            clipParameter = 0.0;
+         }
+         cosine += clipParameter*cos(arg);
+         if (position[0] == 18.4107542037963867) {
+            std::cout << "argument is " << arg << std::endl;
+            std::cout << "clipP is " << clipParameter << std::endl;
+            std::cout << "cosine is " << cosine << std::endl;
+         }   
       }
-      cosine *= clipParameter;
       return prefactor_[type]*externalParameter_*tanh(cosine);
    }
 
@@ -199,8 +207,6 @@ namespace Inter
                                      Vector& force) const
    {
       const Vector cellLengths = boundaryPtr_->lengths();
-      double clipParameter = 1.0/(2.0*M_PI*periodicity_*interfaceWidth_);
-
       double cosine = 0.0;
       Vector deriv;
       deriv.zero();
@@ -209,15 +215,19 @@ namespace Inter
          q[0] = 2.0*M_PI*waveIntVectors_[i][0]/cellLengths[0];
          q[1] = 2.0*M_PI*waveIntVectors_[i][1]/cellLengths[1]; 
          q[2] = 2.0*M_PI*waveIntVectors_[i][2]/cellLengths[2];
-         double arg, sine;
+         double arg, sine, clipParameter;
          arg = q.dot(position);
-         cosine += cos(arg);
-         sine = -1.0*sin(arg);
+         double qLengths = q.dot(cellLengths);
+         if (waveIntVectors_[i][0] != 0 || waveIntVectors_[i][1] != 0 || waveIntVectors_[i][2] != 0) {
+            clipParameter = 1.0/(interfaceWidth_*qLengths);
+         } else {
+            clipParameter = 0.0;
+         }
+         cosine += clipParameter*cos(arg);
+         sine = -1.0*clipParameter*sin(arg);
          q *= sine;
          deriv += q;
       }
-      cosine *= clipParameter;
-      deriv *= clipParameter;
       double tanH = tanh(cosine);
       double sechSq = (1.0 - tanH*tanH);
       double f = prefactor_[type]*externalParameter_*sechSq;
