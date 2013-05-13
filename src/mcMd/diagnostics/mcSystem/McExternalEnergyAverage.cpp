@@ -37,7 +37,6 @@ namespace McMd
    void McExternalEnergyAverage::sample(long iStep) 
    {
       if (!isAtInterval(iStep)) return;
-      int n = 0;
       double energy = 0.0;
       System::MoleculeIterator molIter;
       Molecule::AtomIterator atomIter;
@@ -45,11 +44,6 @@ namespace McMd
          for (system().begin(iSpec, molIter); molIter.notEnd(); ++molIter){
              for (molIter->begin(atomIter); atomIter.notEnd(); ++atomIter) {
                  energy += system().externalPotential().energy(atomIter->position(), atomIter->typeId());
-                 if (n == 0){
-                    std::cout << "energy for 1st atom is " <<  system().externalPotential().energy(atomIter->position(), atomIter->typeId()) << std::endl;
-                    std::cout << "position for 1st atom is " << atomIter->position() << std::endl;
-                 }
-             ++n;
              }
          }
       }

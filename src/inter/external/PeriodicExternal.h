@@ -190,11 +190,6 @@ namespace Inter
             clipParameter = 0.0;
          }
          cosine += clipParameter*cos(arg);
-         if (position[0] == 18.4107542037963867) {
-            std::cout << "argument is " << arg << std::endl;
-            std::cout << "clipP is " << clipParameter << std::endl;
-            std::cout << "cosine is " << cosine << std::endl;
-         }   
       }
       return prefactor_[type]*externalParameter_*tanh(cosine);
    }
