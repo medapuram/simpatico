@@ -72,7 +72,7 @@ namespace DdMd
       /**
       * Set parameters and allocate memory.
       *
-      * This method sets values for the same member as readPairListParam.
+      * This method sets values for the same members as readParameters.
       * Either method must be called after associate. This method sets the
       * skin and cutoff length parameters, and allocates memory for the 
       * internal CellList and a PairList. It uses the maximum boundary and
@@ -85,6 +85,31 @@ namespace DdMd
       void 
       initialize(const Boundary& maxBoundary, double skin, int pairCapacity);
 
+      /**
+      * Read parameters and allocate memory for PairList.
+      *
+      * Use iff this was instantiated with PairPotential(Simulation&).
+      *
+      * \param in input parameter stream.
+      */
+      void readParameters(std::istream& in);
+
+      /**
+      * Load parameters for PairList from archive, and allocate memory.
+      *
+      * Use iff this was instantiated with PairPotential(Simulation&).
+      *
+      * \param ar input/loading archive
+      */
+      virtual void loadParameters(Serializable::IArchive &ar);
+
+      /**
+      * Save parameters for PairList to output archive.
+      *
+      * \param ar output/saving archive
+      */
+      virtual void save(Serializable::OArchive &ar);
+  
       /**
       * Set id to specify algorithm for energy, force calculations.
       *
@@ -274,15 +299,6 @@ namespace DdMd
       int pairCapacity_;
 
       /**
-      * Read parameters and allocate memory for PairList.
-      *
-      * Use iff this was instantiated with PairPotential(Simulation&).
-      *
-      * \param in input parameter stream.
-      */
-      void readPairListParam(std::istream& in);
-
-      /**
       * Get the PairList by const reference.
       */
       Boundary& boundary();
@@ -326,6 +342,11 @@ namespace DdMd
       int nPairList(double cutoffSq);
       int nPairCell(double cutoffSq);
       int nPairNSq(double cutoffSq);
+
+      /*
+      * Allocate memory for the cell list and pair list.
+      */
+      void allocate();
 
    };
 

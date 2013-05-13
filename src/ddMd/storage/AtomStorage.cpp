@@ -15,6 +15,7 @@
 #include "ConstGhostIterator.h"
 #include <ddMd/chemistry/Group.h>
 #include <util/format/Int.h>
+#include <util/mpi/MpiLoader.h>
 #include <util/global.h>
 
 namespace DdMd
@@ -52,13 +53,25 @@ namespace DdMd
       #else
       isCartesian_(false)
       #endif
-   { setClassName("AtomStorage"); }
+   {  setClassName("AtomStorage"); }
  
    /*
    * Destructor.
    */
    AtomStorage::~AtomStorage()
    {}
+
+   /*
+   * Set parameters and allocate memory.
+   */
+   void AtomStorage::initialize(int atomCapacity, int ghostCapacity, 
+      int totalAtomCapacity)
+   {
+      atomCapacity_ = atomCapacity;
+      ghostCapacity_ = ghostCapacity;
+      totalAtomCapacity_ = totalAtomCapacity;
+      allocate();
+   }
 
    /*
    * Read parameters and allocate memory.
@@ -72,15 +85,29 @@ namespace DdMd
    }
 
    /*
-   * Set parameters and allocate memory.
+   * Load parameters and allocate memory (call on all processors)
    */
-   void AtomStorage::initialize(int atomCapacity, int ghostCapacity, 
-      int totalAtomCapacity)
+   void AtomStorage::loadParameters(Serializable::IArchive& ar)
    {
-      atomCapacity_ = atomCapacity;
-      ghostCapacity_ = ghostCapacity;
-      totalAtomCapacity_ = totalAtomCapacity;
+      loadParameter<int>(ar, "atomCapacity", atomCapacity_);
+      loadParameter<int>(ar, "ghostCapacity", ghostCapacity_);
+      loadParameter<int>(ar, "totalAtomCapacity", totalAtomCapacity_);
+      MpiLoader<Serializable::IArchive> loader(*this, ar);
+      loader.load(maxNAtomLocal_);
+      loader.load(maxNGhostLocal_);
       allocate();
+   }
+
+   /*
+   * Save parameters (call only on ioProcessor).
+   */
+   void AtomStorage::save(Serializable::OArchive& ar)
+   {
+      ar << atomCapacity_;
+      ar << ghostCapacity_;
+      ar << totalAtomCapacity_;
+      ar << maxNAtomLocal_;
+      ar << maxNGhostLocal_;
    }
 
    /*
@@ -203,6 +230,43 @@ namespace DdMd
       atomPtr->setIsGhost(false);
    }
 
+   /*
+   * Remove all local atoms.
+   */
+   void AtomStorage::clearAtoms()
+   {
+      // Precondition
+      if (locked_) {
+         UTIL_THROW("AtomStorage is locked");
+      }
+
+      Atom* atomPtr;
+      int   atomId;
+      while (atomSet_.size() > 0) {
+         atomPtr = &atomSet_.pop();
+         atomId = atomPtr->id();
+         if (atomPtrs_[atomId] == atomPtr) { 
+            atomPtrs_[atomId] = 0;
+         } else {
+            if (atomPtrs_[atomId] == 0) {
+               UTIL_THROW("Error: Unexpected null in atomPtrs_");
+            } else {
+               if (atomPtrs_[atomId]->id() != atomId) {
+                  UTIL_THROW("Error: Inconsistent id in atomPtrs_");
+               }
+            }
+         }
+         // atomPtr->setId(-1);
+         // atomPtr->clear();
+         atomReservoir_.push(*atomPtr);
+      }
+
+      // Sanity check.
+      if (atomSet_.size() != 0) {
+         UTIL_THROW("Nonzero atomSet size at end of clearAtoms");
+      }
+   }
+
    // Ghost atom mutators
 
    /*
@@ -284,7 +348,7 @@ namespace DdMd
    }
 
    /*
-   * Remove a specific ghost Atom.
+   * Remove all ghosts.
    */
    void AtomStorage::clearGhosts()
    {

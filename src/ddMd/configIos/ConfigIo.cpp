@@ -31,6 +31,7 @@
 #include <ddMd/chemistry/MaskPolicy.h>
 #include <util/space/Vector.h>
 #include <util/mpi/MpiSendRecv.h>
+#include <util/mpi/MpiLoader.h>
 #include <util/format/Int.h>
 #include <util/format/Dbl.h>
 
@@ -144,29 +145,6 @@ namespace DdMd
    }
 
    /*
-   * Read cache size and allocate memory.
-   */
-   void ConfigIo::readParameters(std::istream& in)
-   {
-      read<int>(in, "atomCacheCapacity", atomCacheCapacity_);
-      atomDistributor_.initialize(atomCacheCapacity_);
-      atomCollector_.allocate(atomCacheCapacity_);
-      read<int>(in, "bondCacheCapacity", bondCacheCapacity_);
-      bondDistributor_.initialize(bondCacheCapacity_);
-      bondCollector_.allocate(bondCacheCapacity_);
-      #ifdef INTER_ANGLE
-      read<int>(in, "angleCacheCapacity", angleCacheCapacity_);
-      angleDistributor_.initialize(angleCacheCapacity_);
-      angleCollector_.allocate(angleCacheCapacity_);
-      #endif
-      #ifdef INTER_DIHEDRAL
-      read<int>(in, "dihedralCacheCapacity", dihedralCacheCapacity_);
-      dihedralDistributor_.initialize(dihedralCacheCapacity_);
-      dihedralCollector_.allocate(dihedralCacheCapacity_);
-      #endif
-   }
-
-   /*
    * Set parameters and allocate memory.
    */
    void ConfigIo::initialize(int atomCacheCapacity, int bondCacheCapacity
@@ -197,10 +175,76 @@ namespace DdMd
    }
 
    /*
+   * Read cache capacity parameters and allocate memory.
+   */
+   void ConfigIo::readParameters(std::istream& in)
+   {
+      read<int>(in, "atomCacheCapacity", atomCacheCapacity_);
+      atomDistributor_.initialize(atomCacheCapacity_);
+      atomCollector_.allocate(atomCacheCapacity_);
+      read<int>(in, "bondCacheCapacity", bondCacheCapacity_);
+      bondDistributor_.initialize(bondCacheCapacity_);
+      bondCollector_.allocate(bondCacheCapacity_);
+      #ifdef INTER_ANGLE
+      read<int>(in, "angleCacheCapacity", angleCacheCapacity_);
+      angleDistributor_.initialize(angleCacheCapacity_);
+      angleCollector_.allocate(angleCacheCapacity_);
+      #endif
+      #ifdef INTER_DIHEDRAL
+      read<int>(in, "dihedralCacheCapacity", dihedralCacheCapacity_);
+      dihedralDistributor_.initialize(dihedralCacheCapacity_);
+      dihedralCollector_.allocate(dihedralCacheCapacity_);
+      #endif
+   }
+
+   /*
+   * Load internal state from input archive and allocate memory.
+   */
+   void ConfigIo::load(Serializable::IArchive& ar)
+   {
+      MpiLoader<Serializable::IArchive> loader(*this, ar);
+
+      loader.load(atomCacheCapacity_);
+      atomDistributor_.initialize(atomCacheCapacity_);
+      atomCollector_.allocate(atomCacheCapacity_);
+
+      loader.load(bondCacheCapacity_);
+      bondDistributor_.initialize(bondCacheCapacity_);
+      bondCollector_.allocate(bondCacheCapacity_);
+
+      #ifdef INTER_ANGLE
+      loader.load(angleCacheCapacity_);
+      angleDistributor_.initialize(angleCacheCapacity_);
+      angleCollector_.allocate(angleCacheCapacity_);
+      #endif
+
+      #ifdef INTER_DIHEDRAL
+      loader.load(dihedralCacheCapacity_);
+      dihedralDistributor_.initialize(dihedralCacheCapacity_);
+      dihedralCollector_.allocate(dihedralCacheCapacity_);
+      #endif
+   }
+
+   /*
+   * Save internal state to output archive.
+   */
+   void ConfigIo::save(Serializable::OArchive& ar)
+   {
+      ar & atomCacheCapacity_;
+      ar & bondCacheCapacity_;
+      #ifdef INTER_ANGLE
+      ar & angleCacheCapacity_;
+      #endif
+      #ifdef INTER_DIHEDRAL
+      ar & dihedralCacheCapacity_;
+      #endif
+   } 
+
+   /*
    * Private method to read Group<N> objects.
    */
    template <int N>
-   int ConfigIo::readGroups(std::istream& file, 
+   int ConfigIo::readGroups(std::ifstream& file, 
                   const char* sectionLabel,
                   const char* nGroupLabel,
                   GroupDistributor<N>& distributor) 
@@ -233,7 +277,7 @@ namespace DdMd
    * Private method to write Group<N> objects.
    */
    template <int N>
-   int ConfigIo::writeGroups(std::ostream& file, 
+   int ConfigIo::writeGroups(std::ofstream& file, 
                   const char* sectionLabel,
                   const char* nGroupLabel,
                   GroupStorage<N>& storage,

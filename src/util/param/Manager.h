@@ -342,7 +342,7 @@ namespace Util
    void Manager<Data>::endReadManager()
    {
       End* endPtr = &addEnd();
-      if (ParamComponent::echo() && isParamIoProcessor()) {
+      if (ParamComponent::echo() && isIoProcessor()) {
          endPtr->writeParam(Log::file());
       }
    }
@@ -360,7 +360,15 @@ namespace Util
       // Check if a Factory exists, create one if necessary.
       initFactory();
 
-      ar >> size;
+      if (isIoProcessor()) {
+         ar >> size;
+      }
+      #ifdef UTIL_MPI
+      if (hasIoCommunicator()) {
+         bcast<int>(ioCommunicator(), size, 0);
+      }
+      #endif
+
       for (int i = 0; i < size; ++i) {
          addBlank();
          name = "unknown";

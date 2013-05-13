@@ -52,7 +52,21 @@ namespace DdMd
       ~AtomStorage();
 
       /**
+      * Set parameters, allocate memory and initialize.
+      *
+      * Call this or (read|load)Parameters to initialize, but not both.
+      *
+      * \param atomCapacity      max number of atoms owned by processor.
+      * \param ghostCapacity     max number of ghosts on this processor.
+      * \param totalAtomCapacity max number of atoms on all processors.
+      */
+      void initialize(int atomCapacity, int ghostCapacity,
+                      int totalAtomCapacity);
+
+      /**
       * Read parameters, allocate memory and initialize.
+      *
+      * Call either this or initialize(), but not both.
       *
       * Parameters (file format):
       *  - atomCapacity      [int]  max number of atoms owned by processor.
@@ -64,15 +78,21 @@ namespace DdMd
       virtual void readParameters(std::istream& in);
 
       /**
-      * Set parameters, allocate memory and initialize.
+      * Load internal state from an archive.
       *
-      * \param atomCapacity      max number of atoms owned by processor.
-      * \param ghostCapacity     max number of ghosts on this processor.
-      * \param totalAtomCapacity max number of atoms on all processors.
+      * \param ar input/loading archive
       */
-      void initialize(int atomCapacity, int ghostCapacity,
-                    int totalAtomCapacity);
+      virtual void loadParameters(Serializable::IArchive &ar);
 
+      /**
+      * Save internal state to an archive.
+      *
+      * Call only on ioProcessor (master).
+      *
+      * \param ar output/saving archive
+      */
+      virtual void save(Serializable::OArchive &ar);
+  
       /// \name Local Atom Management
       //@{
 
@@ -148,6 +168,11 @@ namespace DdMd
       * \param atomPtr pointer to the atom to be removed
       */
       void removeAtom(Atom* atomPtr); 
+
+      /**
+      * Clear all local and ghost atoms.
+      */
+      void clearAtoms(); 
 
       //@}
       /// \name Ghost Atom Management
@@ -240,7 +265,7 @@ namespace DdMd
       */
       void transformGenToCart(const Boundary& boundary);
 
-      /*
+      /**
       * Are atomic coordinates Cartesian (true) or generalized (false)?
       */
       bool isCartesian() const;

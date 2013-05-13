@@ -61,6 +61,20 @@ namespace DdMd
       */
       virtual void readParameters(std::istream& in);
 
+      /**
+      * Load internal state from an archive.
+      *
+      * \param ar input/loading archive
+      */
+      virtual void loadParameters(Serializable::IArchive &ar);
+
+      /**
+      * Save internal state to an archive.
+      *
+      * \param ar output/saving archive
+      */
+      virtual void save(Serializable::OArchive &ar);
+  
       /// \name Interaction interface
       //@{
 
@@ -305,16 +319,7 @@ namespace DdMd
       }
    }
 
-   template <class Interaction>
-   void PairPotentialImpl<Interaction>::readParameters(std::istream& in)
-   {
-      bool nextIndent = false;
-      addParamComposite(interaction(), nextIndent);
-      interaction().readParameters(in);
-      readPairListParam(in);
-   }
-
-   /**
+   /*
    * Set the maximum number of atom types.
    */
    template <class Interaction>
@@ -322,12 +327,47 @@ namespace DdMd
    {  interaction().setNAtomType(nAtomType); }
 
    /*
+   * Read parameters from file
+   */
+   template <class Interaction>
+   void PairPotentialImpl<Interaction>::readParameters(std::istream& in)
+   {
+      bool nextIndent = false;
+      addParamComposite(interaction(), nextIndent);
+      interaction().readParameters(in);
+      PairPotential::readParameters(in);
+   }
+
+   /*
+   * Load internal state from an archive.
+   */
+   template <class Interaction>
+   void 
+   PairPotentialImpl<Interaction>::loadParameters(Serializable::IArchive &ar)
+   {
+      bool nextIndent = false;
+      addParamComposite(interaction(), nextIndent);
+      interaction().loadParameters(ar);
+      PairPotential::loadParameters(ar);
+   }
+
+   /*
+   * Save internal state to an archive.
+   */
+   template <class Interaction>
+   void PairPotentialImpl<Interaction>::save(Serializable::OArchive &ar)
+   {  
+      interaction().save(ar); 
+      PairPotential::save(ar);
+   }
+
+   /*
    * Return pair energy for a single pair.
    */
    template <class Interaction> double 
    PairPotentialImpl<Interaction>::pairEnergy(double rsq, 
                                         int iAtomType, int jAtomType) const
-   { return interaction().energy(rsq, iAtomType, jAtomType); }
+   {  return interaction().energy(rsq, iAtomType, jAtomType); }
 
    /*
    * Return force / separation for a single pair.
@@ -348,7 +388,7 @@ namespace DdMd
    */
    template <class Interaction>
    double PairPotentialImpl<Interaction>::maxPairCutoff() const
-   { return interaction().maxPairCutoff(); }
+   {  return interaction().maxPairCutoff(); }
 
    /*
    * Return pair interaction class name.
@@ -481,6 +521,7 @@ namespace DdMd
          j = pairList_.nPair();  // j = # of remaining unprocessed pairs
          while (j) {
 
+            // Determine n = number of pairs in this block
             n = std::min(PAIR_BLOCK_SIZE, j);
 
             // Calculate separation for each pair in block
@@ -495,8 +536,9 @@ namespace DdMd
                ++iter;
             }
 
-            // Identify pairs with rsq < cutoff
-            m = 0; // Number of pairs with rsq < cutoff
+            // Identify pairs in this block with rsq < cutoff
+            // Determine m = number of pairs with rsq < cutoff
+            m = 0; 
             for (i = 0; i < n; ++i) {
                pairPtr = &pairs_[i];
                atom0Ptr = pairPtr->ptr0;
@@ -525,8 +567,10 @@ namespace DdMd
                }
             }
 
-            j = j - n;
+            // Decrement number of remaining unprocess pairs
+            j = j - n; 
          }
+
          #ifdef UTIL_DEBUG
          if (j != 0) {
             UTIL_THROW("Error in counting");
@@ -534,10 +578,9 @@ namespace DdMd
          if (iter.notEnd()) {
             UTIL_THROW("Error in iterator");
          }
-         #endif // UTIL_DEBUG
-         #endif
+         #endif // ifdef UTIL_DEBUG
 
-         #ifndef PAIR_BLOCK_SIZE
+         #else  // ifdef PAIR_BLOCK_SIZE
          Vector f;
          for (pairList_.begin(iter); iter.notEnd(); ++iter) {
             iter.getPair(atom0Ptr, atom1Ptr);
@@ -553,7 +596,7 @@ namespace DdMd
                }
             }
          }
-         #endif
+         #endif // ifdef PAIR_BLOCK_SIZE
 
       }
    }

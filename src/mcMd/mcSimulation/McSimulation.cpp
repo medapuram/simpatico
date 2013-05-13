@@ -63,8 +63,8 @@ namespace McMd
       mcMoveManagerPtr_(0),
       mcDiagnosticManagerPtr_(0),
       paramFilePtr_(0),
-      writeRestartFileName_(),
-      writeRestartInterval_(0),
+      saveFileName_(),
+      saveInterval_(0),
       isInitialized_(false),
       isRestarting_(false)
    {
@@ -93,8 +93,8 @@ namespace McMd
       mcMoveManagerPtr_(0),
       mcDiagnosticManagerPtr_(0),
       paramFilePtr_(0),
-      writeRestartFileName_(),
-      writeRestartInterval_(0),
+      saveFileName_(),
+      saveInterval_(0),
       isInitialized_(false),
       isRestarting_(false)
    {
@@ -178,7 +178,7 @@ namespace McMd
          #ifdef UTIL_MPI
          Util::Log::file() << "Set to use single parameter and command files" 
                            << std::endl;
-         setParamCommunicator();
+         setIoCommunicator();
          #endif
    
       }
@@ -189,7 +189,7 @@ namespace McMd
          Log::file() << "Begin reading restart, base file name " 
                      << std::string(rarg) << std::endl;
          isRestarting_ = true; 
-         readRestart(std::string(rarg));
+         load(std::string(rarg));
          Util::Log::file() << std::endl;
       }
 
@@ -221,9 +221,9 @@ namespace McMd
       readParamComposite(in, diagnosticManager());
 
       // Parameters for writing restart files
-      read<int>(in, "writeRestartInterval", writeRestartInterval_);
-      if (writeRestartInterval_ > 0) {
-         read<std::string>(in, "writeRestartFileName", writeRestartFileName_);
+      read<int>(in, "saveInterval", saveInterval_);
+      if (saveInterval_ > 0) {
+         read<std::string>(in, "saveFileName", saveFileName_);
       }
 
       isValid();
@@ -260,7 +260,7 @@ namespace McMd
          UTIL_THROW("Error: Called readParam when already initialized");
       }
       #ifdef UTIL_MPI
-      if (hasParamCommunicator()) {
+      if (hasIoCommunicator()) {
          UTIL_THROW("Error: Has a param communicator in loadParameters");
       }
       #endif
@@ -269,6 +269,11 @@ namespace McMd
       loadParamComposite(ar, system());
       loadParamComposite(ar, *mcMoveManagerPtr_);
       loadParamComposite(ar, diagnosticManager());
+      loadParameter<int>(ar, "saveInterval", saveInterval_);
+      if (saveInterval_ > 0) {
+         loadParameter<std::string>(ar, "saveFileName", saveFileName_);
+      }
+
       system().loadConfig(ar);
       ar >> iStep_;
       isValid();
@@ -284,17 +289,22 @@ namespace McMd
       system().saveParameters(ar);
       mcMoveManagerPtr_->save(ar);
       diagnosticManager().save(ar);
+      ar << saveInterval_;
+      if (saveInterval_ > 0) {
+         ar << saveFileName_;
+      }
+
       system().saveConfig(ar);
       ar << iStep_;
    }
 
-   void McSimulation::readRestart(const std::string& filename)
+   void McSimulation::load(const std::string& filename)
    {
       if (isInitialized_) {
-         UTIL_THROW("Error: Called readRestart when already initialized");
+         UTIL_THROW("Error: Called load when already initialized");
       }
       if (!isRestarting_) {
-         UTIL_THROW("Error: Called readRestart without restart option");
+         UTIL_THROW("Error: Called load without restart option");
       }
 
       // Load from archive
@@ -313,7 +323,7 @@ namespace McMd
          // Read one command file, after reading multiple restart files.
          Util::Log::file() << "Set to use a single command file" 
                            << std::endl;
-         setParamCommunicator();
+         setIoCommunicator();
       }
       #endif
       #endif
@@ -321,10 +331,10 @@ namespace McMd
       isInitialized_ = true;
    }
 
-   void McSimulation::writeRestart(const std::string& filename)
+   void McSimulation::save(const std::string& filename)
    {
-      if (writeRestartInterval_ > 0) {
-         if (iStep_ % writeRestartInterval_ == 0) {
+      if (saveInterval_ > 0) {
+         if (iStep_ % saveInterval_ == 0) {
             Serializable::OArchive ar;
             fileMaster().openRestartOFile(filename, ".rst", ar.file());
             save(ar);
@@ -362,10 +372,10 @@ namespace McMd
 
          #ifdef UTIL_MPI
          // Read a command line, and broadcast if necessary.
-         if (!hasParamCommunicator() || isParamIoProcessor()) {
+         if (!hasIoCommunicator() || isIoProcessor()) {
             getNextLine(in, line);
          }
-         if (hasParamCommunicator()) {
+         if (hasIoCommunicator()) {
             bcast<std::string>(communicator(), line, 0);
          }
 
@@ -630,7 +640,7 @@ namespace McMd
          // Diagnostics and restart outut
          if (Diagnostic::baseInterval > 0) {
             if (iStep_ % Diagnostic::baseInterval == 0) {
-               writeRestart(writeRestartFileName_);
+               save(saveFileName_);
                diagnosticManager().sample(iStep_);
             }
          }
@@ -660,11 +670,11 @@ namespace McMd
       timer.stop();
       double time = timer.time();
 
-      // Final diagnostics / restart 
+      // Final diagnostics / save
       assert(iStep_ == endStep);
       if (Diagnostic::baseInterval > 0) {
          if (iStep_ % Diagnostic::baseInterval == 0) {
-            writeRestart(writeRestartFileName_);
+            save(saveFileName_);
             diagnosticManager().sample(iStep_);
          }
       }

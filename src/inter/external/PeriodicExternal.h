@@ -93,15 +93,6 @@ namespace Inter
       double externalParameter() const;
 
       /**
-      * Returns external potential energy of a particle of type i.
-      *
-      * \param d  component of position along the perpendicular direction
-      * \param i  type of particle (prefactor depends on atomtype)
-      * \return   external potential energy
-      */
-      //double energy(double d, int i) const;
- 
-      /**
       * Returns external potential energy of a single particle. 
       *
       * \param position atomic position Vector
@@ -110,15 +101,6 @@ namespace Inter
       */
       double energy(const Vector& position, int i) const;
 
-      /**
-      * Returns magnitude of the external force.
-      *
-      * \param d    component of position along the perpendicular direction
-      * \param type atom type id (not used)
-      * \return    force scalar
-      */
-      //double forceScalar(double d, int type) const;
- 
       /**
       * Returns force caused by the external potential.
       *
@@ -175,9 +157,9 @@ namespace Inter
    inline double PeriodicExternal::energy(const Vector& position, int type) const
    {
       const Vector cellLengths = boundaryPtr_->lengths();
+      Vector q;
       double cosine = 0.0;
       for (int i = 0; i < nWaveVectors_; ++i) {
-         Vector q;
          q[0] = 2.0*M_PI*waveIntVectors_[i][0]/cellLengths[0];
          q[1] = 2.0*M_PI*waveIntVectors_[i][1]/cellLengths[1]; 
          q[2] = 2.0*M_PI*waveIntVectors_[i][2]/cellLengths[2];
@@ -204,9 +186,9 @@ namespace Inter
       const Vector cellLengths = boundaryPtr_->lengths();
       double cosine = 0.0;
       Vector deriv;
+      Vector q;
       deriv.zero();
       for (int i = 0; i < nWaveVectors_; ++i) {
-         Vector q;
          q[0] = 2.0*M_PI*waveIntVectors_[i][0]/cellLengths[0];
          q[1] = 2.0*M_PI*waveIntVectors_[i][1]/cellLengths[1]; 
          q[2] = 2.0*M_PI*waveIntVectors_[i][2]/cellLengths[2];

@@ -74,11 +74,6 @@ namespace DdMd
                      Buffer& buffer);
 
       /**
-      * Read cache size and allocate memory.
-      */
-      virtual void readParameters(std::istream& in);
-
-      /**
       * Set cache sizes and allocate memory.
       *
       * \param atomCacheCapacity size of internal atom cache. 
@@ -97,23 +92,55 @@ namespace DdMd
                               );
 
       /**
+      * Read cache size and allocate memory.
+      */
+      virtual void readParameters(std::istream& in);
+
+      /**
+      * Load internal state from an archive.
+      *
+      * \param ar input/loading archive
+      */
+      virtual void load(Serializable::IArchive &ar);
+
+      /**
+      * Save internal state to an archive.
+      *
+      * \param ar output/saving archive
+      */
+      virtual void save(Serializable::OArchive &ar);
+
+      /**
       * Read a configuration file.
       *
-      * This reads a configuration file from the master processor, and 
-      * distributes atoms and groups among the processors. Upon entry,
-      * the file must be open for reading. 
+      * This method reads a configuration file from the master processor, and 
+      * distributes atoms and groups among the processors. It is implemented
+      * using an AtomDistributor object. Atomic positions in the configuration
+      * file that lie outside the primary cell will automatically be shifted 
+      * into the primary cell by the AtomDistributor::addAtom() method before 
+      * being assigned to processors or distributed.
+      *
+      * Upon entry (preconditions):
+      *
+      *   - The configuration file must be open for reading.
+      *
+      *   - The configuration file may contain atomic positions that lie 
+      *     slightly outside the primary simulation.
       *
       * Upon return (postconditions):
       *
       *   - Each processor owns all atoms in its domain, and no others.
       *     Each atom is owned by one and only one processor.
       *
-      *   - Each processor owns every group that contains one or more
-      *     of the atoms that it owns, and no others. Each group may
-      *     be owned by more than one processor.
+      *   - Each atom position is in the primary simulation cell.
       *
       *   - If UTIL_ORTHOGONAL is true (see Boundary class), all Atom 
-      *     positions are expressed in generalized coordinates.
+      *     positions are expressed in scaled dimensionless coordinates,
+      *     between 0.0 and 1.0. Otherwise, atomic positions are Cartesian.
+      *
+      *   - Each processor owns every group that contains one or more of 
+      *     the atoms that it owns, and no others. Each group may be owned
+      *     by more than one processor.
       *
       *   - All Atom Mask data is set correctly for specified maskPolicy.
       *
@@ -122,20 +149,27 @@ namespace DdMd
       * \param file input file stream
       * \param maskPolicy MaskPolicy to be used in setting atom masks
       */
-      virtual void readConfig(std::istream& file, MaskPolicy maskPolicy) = 0;
+      virtual void readConfig(std::ifstream& file, MaskPolicy maskPolicy) = 0;
 
       /**
       * Write configuration file.
       *
       * This routine opens and writes a file on the master, collecting atom
-      * and group data from all processors. Many file formats allow atom and
-      * groups to be written in arbitrary order. Atomic positions may be 
+      * and group data from all processors. Many file formats allow atom 
+      * and groups to be written in arbitrary order. Atomic positions may be 
       * written in Cartesian or generalized coordinates, depending on the
-      * file format.
+      * file format. Atomic positions may be written "as is", and may lie 
+      * slightly outside the primary cell, because they will be shifted back 
+      * by the readConfig() method.
+      *
+      * This method must function correctly when atomic coordinates are in the
+      * format used between commands (Cartesian if UTIL_ORTHOGONAL, or scaled
+      * otherwise). The SerializeConfigIo subclass is designed to detect the
+      * coordinate system and function correctly in either case. 
       *
       * \param file output file stream
       */
-      virtual void writeConfig(std::ostream& file) = 0;
+      virtual void writeConfig(std::ofstream& file) = 0;
 
    protected:
 
@@ -224,46 +258,38 @@ namespace DdMd
    
    private:
 
+      // Distributors and collectors
       AtomDistributor atomDistributor_;
       AtomCollector atomCollector_;
-
       GroupDistributor<2> bondDistributor_;
       GroupCollector<2> bondCollector_;
-
       #ifdef INTER_ANGLE
       GroupDistributor<3> angleDistributor_;
       GroupCollector<3> angleCollector_;
       #endif
-
       #ifdef INTER_DIHEDRAL
       GroupDistributor<4> dihedralDistributor_;
       GroupCollector<4> dihedralCollector_;
       #endif
 
+      // Pointers to associated objects.
       Domain* domainPtr_;
-
       Boundary* boundaryPtr_;
-
       AtomStorage* atomStoragePtr_;
-
       BondStorage* bondStoragePtr_;
-
       #ifdef INTER_ANGLE
       AngleStorage* angleStoragePtr_;
       #endif
-
       #ifdef INTER_DIHEDRAL
       DihedralStorage* dihedralStoragePtr_;
       #endif
 
+      // Cache capacities
       int  atomCacheCapacity_;
-
       int  bondCacheCapacity_;
-
       #ifdef INTER_ANGLE
       int  angleCacheCapacity_;
       #endif
-
       #ifdef INTER_DIHEDRAL
       int  dihedralCacheCapacity_;
       #endif
@@ -272,7 +298,7 @@ namespace DdMd
       * Read Group<N> objects from file. 
       */
       template <int N>
-      int readGroups(std::istream& file, 
+      int readGroups(std::ifstream& file, 
                      const char* sectionLabel, const char* nGroupLabel,
                      GroupDistributor<N>& distributor);
 
@@ -280,41 +306,13 @@ namespace DdMd
       * Write Group<N> objects to file. 
       */
       template <int N>
-      int writeGroups(std::ostream& file, 
+      int writeGroups(std::ofstream& file, 
                       const char* sectionLabel, const char* nGroupLabel,
                       GroupStorage<N>& storage, GroupCollector<N>& collector);
 
    };
 
    // Inline method definitions
-
-   inline AtomDistributor& ConfigIo::atomDistributor()
-   { return atomDistributor_; }
-
-   inline AtomCollector& ConfigIo::atomCollector()
-   { return atomCollector_; }
-
-   inline GroupDistributor<2>& ConfigIo::bondDistributor()
-   { return bondDistributor_; }
-
-   inline GroupCollector<2>& ConfigIo::bondCollector()
-   { return bondCollector_; }
-
-   #ifdef INTER_ANGLE
-   inline GroupDistributor<3>& ConfigIo::angleDistributor()
-   { return angleDistributor_; }
-
-   inline GroupCollector<3>& ConfigIo::angleCollector()
-   { return angleCollector_; }
-   #endif
-
-   #ifdef INTER_DIHEDRAL
-   inline GroupDistributor<4>& ConfigIo::dihedralDistributor()
-   { return dihedralDistributor_; }
-
-   inline GroupCollector<4>& ConfigIo::dihedralCollector()
-   { return dihedralCollector_; }
-   #endif
 
    inline Domain& ConfigIo::domain()
    { return *domainPtr_; }
@@ -325,17 +323,41 @@ namespace DdMd
    inline AtomStorage& ConfigIo::atomStorage()
    { return *atomStoragePtr_; }
 
+   inline AtomDistributor& ConfigIo::atomDistributor()
+   { return atomDistributor_; }
+
+   inline AtomCollector& ConfigIo::atomCollector()
+   { return atomCollector_; }
+
    inline BondStorage& ConfigIo::bondStorage()
    { return *bondStoragePtr_; }
+
+   inline GroupDistributor<2>& ConfigIo::bondDistributor()
+   { return bondDistributor_; }
+
+   inline GroupCollector<2>& ConfigIo::bondCollector()
+   { return bondCollector_; }
 
    #ifdef INTER_ANGLE
    inline AngleStorage& ConfigIo::angleStorage()
    { return *angleStoragePtr_; }
+
+   inline GroupDistributor<3>& ConfigIo::angleDistributor()
+   { return angleDistributor_; }
+
+   inline GroupCollector<3>& ConfigIo::angleCollector()
+   { return angleCollector_; }
    #endif
 
    #ifdef INTER_DIHEDRAL
    inline DihedralStorage& ConfigIo::dihedralStorage()
    { return *dihedralStoragePtr_; }
+
+   inline GroupDistributor<4>& ConfigIo::dihedralDistributor()
+   { return dihedralDistributor_; }
+
+   inline GroupCollector<4>& ConfigIo::dihedralCollector()
+   { return dihedralCollector_; }
    #endif
 
 }

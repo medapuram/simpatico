@@ -10,28 +10,24 @@ Testing
 Initial Ghost Exchange
 ----------------------
 
-- Add initExchangeGhosts method to DdMd::Exchanger that distributes 
-  the groups among neighboring processors without sending many 
-  unnecessary ghosts (to decrease memory requirements).
+- Add initExchangeGhosts method to DdMd::Exchanger that distributes the 
+  groups among neighboring processors without sending many unnecessary 
+  ghosts (to decrease memory requirements).
 
-Dynamic Resizing
-----------------
+Cell List and Pair List:
+------------------------
 
-- Allow for dynamic resizing of Buffer class.
+- Modify Cell::OffsetArray object to use strips of cells, to allow 
+  efficient use of smaller cells.
 
-- Allow for dynamic resizing of Storage classes.
-  For AtomStorage, must emit signal to reset pointers to atoms.
+- Modify OffsetArray to include all cells for which the closest corner
+  is within the pair list cutoff.
 
 Flexible Unit Cells:
 --------------------
 
 - Generalize makeSnapShot and needsExchange methods in AtomStorage to 
   allow for deforming boundaries (requires further changes to Boundary).
-
-Restart
--------
-
-- Add ddMd restart capability, based on save / load methods. 
 
 Buffer:
 -------
@@ -61,6 +57,12 @@ Buffer:
 
 - Add values INT, DOUBLE, VECTOR to enumeration of types.
 
+Dynamic Resizing
+----------------
+
+- Allow for dynamic resizing of Storage classes.
+  For AtomStorage, must emit signal to reset pointers to atoms.
+
 Hybrid MD
 ---------
 
@@ -68,21 +70,12 @@ Hybrid MD
 
 - Add transactions to GroupStorage (in transactions branch).
 
-Cell List and Pair List:
-------------------------
-
-- Modify Cell::OffsetArray object to use strips of cells, to allow 
-  efficient use of smaller cells.
-
-- Modify OffsetArray to include all cells for which the closest corner
-  is within the pair list cutoff.
-
 Single Processor Operation
 --------------------------
 
-- Modify Distributor, Collector, ConfigIo, and Exchanger classes 
-  to work ifndef UTIL_MPI, continue with other classes, to enable 
-  single processor operation with no MPI.
+- Modify Distributor, Collector, ConfigIo, and Exchanger classes to 
+  work ifndef UTIL_MPI, continue with other classes, to enable single 
+  processor operation with no MPI.
 
 Atom
 ----
@@ -92,6 +85,6 @@ Atom
 Files
 -----
 
-- Modify default file format to store molecule and species indices.
+- Modify default file format to store speciesId, moleculeId, molAtomId indices.
 
 - Think about separating topology and configuration files. 

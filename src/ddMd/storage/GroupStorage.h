@@ -18,6 +18,7 @@
 #include "GroupIterator.h"
 #include "ConstGroupIterator.h"
 #include <util/format/Int.h>
+#include <util/mpi/MpiLoader.h>  
 #include <util/global.h>
 
 
@@ -48,7 +49,20 @@ namespace DdMd
       ~GroupStorage();
 
       /**
+      * Set parameters, allocate memory and initialize.
+      *
+      * Call on all processors. Call either this or initialize, but not 
+      * both. The initialize function is provided for unit testing.
+      *
+      * \param capacity      max number of groups owned by processor.
+      * \param totalCapacity max number of groups on all processors.
+      */
+      void initialize(int capacity, int totalCapacity);
+
+      /**
       * Read parameters, allocate memory and initialize.
+      *
+      * Call on all processors. Call either this or initialize, but not both.
       *
       * Parameter file format:
       *  - capacity      [int]  max number of groups owned by processor.
@@ -59,13 +73,23 @@ namespace DdMd
       virtual void readParameters(std::istream& in);
 
       /**
-      * Set parameters, allocate memory and initialize.
+      * Load internal state from an archive.
       *
-      * \param capacity      max number of groups owned by processor.
-      * \param totalCapacity max number of groups on all processors.
+      * Call on all processors.
+      *
+      * \param ar input/loading archive
       */
-      void initialize(int capacity, int totalCapacity);
+      virtual void loadParameters(Serializable::IArchive &ar);
 
+      /**
+      * Save internal state to an archive.
+      *
+      * Call only on ioProcessor (master).
+      *
+      * \param ar output/saving archive
+      */
+      virtual void save(Serializable::OArchive &ar);
+  
       /// \name Group Management
       //@{
 
@@ -143,6 +167,11 @@ namespace DdMd
       * \param groupPtr pointer to the group to be removed
       */
       void remove(Group<N>* groupPtr); 
+
+      /**
+      * Remove all groups.
+      */
+      void clearGroups(); 
 
       //@}
       /// \name Iterator Interface
@@ -366,6 +395,17 @@ namespace DdMd
    {}
 
    /*
+   * Set parameters and allocate memory.
+   */
+   template <int N>
+   void GroupStorage<N>::initialize(int capacity, int totalCapacity)
+   {
+      capacity_  = capacity;
+      totalCapacity_ = totalCapacity;
+      allocate();
+   }
+
+   /*
    * Read parameters and allocate memory.
    */
    template <int N>
@@ -377,14 +417,30 @@ namespace DdMd
    }
 
    /*
-   * Set parameters and allocate memory.
+   * Load parameters from input archive and allocate memory.
    */
    template <int N>
-   void GroupStorage<N>::initialize(int capacity, int totalCapacity)
+   void GroupStorage<N>::loadParameters(Serializable::IArchive& ar)
    {
-      capacity_      = capacity;
-      totalCapacity_ = totalCapacity;
+      loadParameter<int>(ar, "capacity", capacity_);
+      loadParameter<int>(ar, "totalCapacity", totalCapacity_);
       allocate();
+
+      MpiLoader<Serializable::IArchive> loader(*this, ar);
+      loader.load(maxNGroupLocal_);
+      maxNGroup_.set(maxNGroupLocal_);
+   }
+
+   /*
+   * Save parameters to output archive.
+   */
+   template <int N>
+   void GroupStorage<N>::save(Serializable::OArchive& ar)
+   {
+      ar & capacity_;
+      ar & totalCapacity_;
+      int max = maxNGroup_.value();
+      ar & max;
    }
 
    /*
@@ -407,7 +463,6 @@ namespace DdMd
       for (int i = 0; i < totalCapacity_; ++i) {
          groupPtrs_[i] = 0;
       }
-
    }
 
    // Local group mutators
@@ -505,6 +560,27 @@ namespace DdMd
       groupSet_.remove(*groupPtr);
       groupPtrs_[groupId] = 0;
       groupPtr->setId(-1);
+   }
+
+   /*
+   * Remove all groups.
+   */
+   template <int N>
+   void GroupStorage<N>::clearGroups()
+   {
+      Group<N>* groupPtr;
+      int  groupId;
+      while (groupSet_.size() > 0) {
+         groupPtr = &groupSet_.pop();
+         groupId = groupPtr->id();
+         groupPtrs_[groupId] = 0;
+         groupPtr->setId(-1);
+         reservoir_.push(*groupPtr);
+      }
+
+      if (groupSet_.size() != 0) {
+         UTIL_THROW("Nonzero ghostSet size at end of clearGhosts");
+      }
    }
 
    // Accessors
