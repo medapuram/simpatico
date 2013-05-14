@@ -189,8 +189,8 @@ namespace McMd
    {
       Vector lengths = boundaryPtr_->lengths();
       Vector hoomdPosition;
-      for (int i=0; i < Dimension; ++i) {
-         hoomdPosition[i] = position[i]/lengths[i];
+      for (int j=0; j < Dimension; ++j) {
+         hoomdPosition[j] = position[j]/lengths[j];
       }
       Scalar3 X = make_scalar3(hoomdPosition[0], hoomdPosition[1], hoomdPosition[2]);
       BoxDim box(lengths[0], lengths[1], lengths[2]);
@@ -216,8 +216,8 @@ namespace McMd
    {
       Vector lengths = boundaryPtr_->lengths();
       Vector hoomdPosition;
-      for (int i=0; i < Dimension; ++i) {
-         hoomdPosition[i] = position[i]/lengths[i];
+      for (int j=0; j < Dimension; ++j) {
+         hoomdPosition[j] = position[j]/lengths[j];
       }
       Scalar3 X = make_scalar3(hoomdPosition[0], hoomdPosition[1], hoomdPosition[2]);
       BoxDim box(lengths[0], lengths[1], lengths[2]);

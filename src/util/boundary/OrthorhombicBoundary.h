@@ -311,7 +311,7 @@ namespace Util
       /**
       * Copy constructor (Private and not implemented).
       */
-      OrthorhombicBoundary(const OrthorhombicBoundary& );
+      //OrthorhombicBoundary(const OrthorhombicBoundary& );
 
    // friends:
 
