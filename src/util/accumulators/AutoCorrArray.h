@@ -8,12 +8,17 @@
 * Distributed under the terms of the GNU General Public License.
 */
 
-#include <util/accumulators/AutoCorrArrayStage.h>  // base class
 #include <util/param/ParamComposite.h>       // base class
-#include <util/global.h>
-#include <util/format/write.h>
+#include <util/containers/DArray.h>          // member template
+#include <util/containers/RingBuffer.h>      // member template parameter
 
-#include <vector>
+#include <util/accumulators/setToZero.h>
+#include <util/accumulators/product.h>
+#include <util/containers/Array.h>      
+#include <util/space/Vector.h>
+#include <util/format/Int.h>
+#include <util/format/Dbl.h>
+
 #include <complex>
 using std::complex;
 
@@ -49,7 +54,7 @@ namespace Util
    * \ingroup Accumulators_Module
    */
    template <typename Data, typename Product>
-   class AutoCorrArray : public AutoCorrArrayStage<Data, Product>, public ParamComposite
+   class AutoCorrArray : public ParamComposite
    {
    
    public:
@@ -59,11 +64,6 @@ namespace Util
 
        /// Default destructor.
       ~AutoCorrArray();
-
-      /**
-      * Reset to empty state.
-      */
-      void clear();
   
       /**
       * Read parameters, allocate memory and clear history.
@@ -83,21 +83,8 @@ namespace Util
       *
       * \param ensembleCapacity maximum number of sequences in ensemble
       * \param bufferCapacity   maximum number of values in each history
-      * \param blockParameter   number of samples per block average
       */
-      void setParam(int ensembleCapacity, int bufferCapacity, int blockFactor);
-
       void setParam(int ensembleCapacity, int bufferCapacity);
-   
-      /**
-      * Set actual number of sequences in ensemble.
-      *
-      * \pre readParam() or setParam() must have been called previously
-      * \pre nEnsemble <= ensembleCapacity
-      *
-      * \param nEnsemble actual number of sequences in ensemble
-      */
-      void setNEnsemble(int nEnsemble);
    
       /**
       * Load internal state from an archive.
@@ -114,6 +101,33 @@ namespace Util
       virtual void save(Serializable::OArchive &ar);
    
       /**
+      * Set actual number of sequences in ensemble.
+      *
+      * \pre readParam() or setParam() must have been called previously
+      * \pre nEnsemble <= ensembleCapacity
+      *
+      * \param nEnsemble actual number of sequences in ensemble
+      */
+      void setNEnsemble(int nEnsemble);
+   
+      /**
+      * Reset to empty state.
+      */
+      void clear();
+   
+      /**
+      * Sample an array of current values.
+      *
+      * \param values Array of current values
+      */
+      void sample(const Array<Data>& values);
+   
+      /**
+      * Output the autocorrelation function
+      */
+      void output(std::ostream& out);
+  
+      /**
       * Serialize this AutoCorrArray to/from an archive.
       *
       * \param ar       input or output archive
@@ -122,75 +136,41 @@ namespace Util
       template <class Archive>
       void serialize(Archive& ar, const unsigned int version);
 
-      /**
-      * Sample an array of values and output sampled values (if any).
-      *
-      * \param values Array of values
-      * \param out  output stream to which to write block correlation functions
-      */
-      void sample(Array<Data>& values, std::ostream* outFilePtr);
-
-      /**
-      * Sample an array of values.
-      *
-      * If blockFile != 0 and a datafile has been set, this method outputs
-      * block correlation functions to the datafile.
-      *
-      * \param values Array of values
-      */
-      void sample(Array<Data>& values);
-
-      /**
-      * Output the autocorrelation function
-      */
-      void output(std::ostream& out);
-
-      /**
-      * Return average of all sampled values.
-      */
-      Data average() const;
-
-      /**
-      * Numerical integration of autocorrelation function 
-      */
-      double corrTime() const;
-
-      /**
-      * Return autocorrelation at a given lag time
-      * 
-      * \param t the lag time
-      */
-      Product autoCorrelation(int t) const;
-
-      /** 
-      * Return nEnsemble.
-      */
-      int nEnsemble() const;
-
       /** 
       * Return maximum number of samples in history for each sequence.
       */
       int bufferCapacity() const;
   
-      /**
-      * Return blockFactor
+      /** 
+      * Return nEnsemble.
       */
-      int blockFactor() const;
- 
+      int nEnsemble() const;
+  
       /** 
       * Return the total number of samples per sequence thus far.
       */
       int nSample() const;
-
-      /**
-      * Add pointer to a descendant to an array.
+  
+      /** 
+      * Return average of sampled values.
       */
-      virtual void registerDescendant(AutoCorrArrayStage<Data, Product>* descendantPtr);
-
+      Data average() const;
+  
+      /**
+      * Numerical integral of autocorrelation function 
+      */
+      double corrTime() const; 
+      
    private:
-
-      /// Array of pointers to descendants.
-      std::vector<AutoCorrArrayStage<Data, Product>*>  descendants_;
+   
+      /// Array of Ring buffers, each containing a sequence of values.
+      DArray< RingBuffer<Data> > buffers_; 
+   
+      /// Array in which corr[j] = sum of values of <x(i-j), x(i)>
+      DArray<Product> corr_;
+   
+      /// Array in which nCorr[i] = number of values added to corr[i]
+      DArray<int> nCorr_;
    
       /// Sum of all previous values of x(t).
       Data sum_;
@@ -201,19 +181,21 @@ namespace Util
       /// Capacity (# of elements) of corr, nCorr and each buffer.
       int  bufferCapacity_;
       
-      int blockFactor_;
-
       /// Total number of sequences
       int  nEnsemble_;
    
       /// Total number of previous values of x(t) per sequence
       int  nSample_;
 
-      /// Private and not implemented to prohibit copying.
-      AutoCorrArray(const AutoCorrArray& other);
-      
-      /// Private and not implemented to prohibit assignment.
-      AutoCorrArray& operator = (const AutoCorrArray& other);
+      /**
+      * Allocate memory and call clear.
+      *
+      * Called by readParam and setParam. 
+      *
+      * Precondition: nEnsemble_ and bufferCapacity_ must be set
+      */
+      void allocate();
+   
    };
 
    /*
@@ -221,17 +203,15 @@ namespace Util
    */
    template <typename Data, typename Product>
    AutoCorrArray<Data, Product>::AutoCorrArray() 
-    : AutoCorrArrayStage<Data, Product>(),
-      ParamComposite(),
-      descendants_(),
+    : buffers_(),
+      corr_(),
+      nCorr_(),
       ensembleCapacity_(0),
       bufferCapacity_(0),
-      blockFactor_(0),
       nEnsemble_(0),
       nSample_(0)
    {
       setClassName("AutoCorrArray"); 
-      descendants_.push_back(this);
       setToZero(sum_); 
    }
 
@@ -241,17 +221,6 @@ namespace Util
    template <typename Data, typename Product>
    AutoCorrArray<Data, Product>::~AutoCorrArray() 
    {}
-
-   /* 
-   * Set accumulator to initial empty state.
-   */
-   template <typename Data, typename Product>
-   void AutoCorrArray<Data, Product>::clear()
-   {   
-      setToZero(sum_);
-      nSample_ = 0;
-      AutoCorrArrayStage<Data, Product>::clear();
-   }
  
    /*
    * Read parameters from file.
@@ -261,30 +230,44 @@ namespace Util
    {
       read<int>(in, "ensembleCapacity", ensembleCapacity_);
       read<int>(in, "bufferCapacity",   bufferCapacity_);
-      read<int>(in, "blockFactor",   blockFactor_);
       nEnsemble_ = ensembleCapacity_;
+      allocate();
    }
    
    /*
    * Set parameters and initialize.
    */
    template <typename Data, typename Product>
-   void AutoCorrArray<Data, Product>::setParam(int ensembleCapacity, int bufferCapacity, int blockFactor)
+   void AutoCorrArray<Data, Product>::setParam(int ensembleCapacity, int bufferCapacity)
    {
       ensembleCapacity_ = ensembleCapacity;
       bufferCapacity_ = bufferCapacity;
-      blockFactor_ = blockFactor;
+      allocate();
       nEnsemble_ = ensembleCapacity;
    }
 
    /*
-   * Set parameters and initialize.
+   * Load internal state from archive.
    */
    template <typename Data, typename Product>
-   void AutoCorrArray<Data, Product>::setParam(int ensembleCapacity, int bufferCapacity)
+   void AutoCorrArray<Data, Product>::loadParameters(Serializable::IArchive &ar)
    {
-      setParam(ensembleCapacity, bufferCapacity, 0);
+      loadParameter<int>(ar, "ensembleCapacity", ensembleCapacity_);
+      loadParameter<int>(ar, "bufferCapacity",   bufferCapacity_);
+      ar & nEnsemble_;
+      ar & buffers_; 
+      ar & corr_;
+      ar & nCorr_;
+      ar & sum_;
+      ar & nSample_;
    }
+
+   /*
+   * Save internal state to archive.
+   */
+   template <typename Data, typename Product>
+   void AutoCorrArray<Data, Product>::save(Serializable::OArchive &ar)
+   { ar & *this; }
 
    /*
    * Set or reset nEnsemble.
@@ -301,114 +284,89 @@ namespace Util
       nEnsemble_ = nEnsemble;
    }
 
-   /*
-   * Load internal state from archive.
+   /* 
+   * Set accumulator to initial empty state.
    */
    template <typename Data, typename Product>
-   void AutoCorrArray<Data, Product>::loadParameters(Serializable::IArchive &ar)
-   {
-      loadParameter<int>(ar, "ensembleCapacity", ensembleCapacity_);
-      loadParameter<int>(ar, "bufferCapacity",   bufferCapacity_);
-      loadParameter<int>(ar, "blockFactor",   blockFactor_);
-      ar & nEnsemble_;
-      ar & sum_;
-      ar & nSample_;
+   void AutoCorrArray<Data, Product>::clear()
+   {   
+      setToZero(sum_);
+      nSample_ = 0;
+      if (bufferCapacity_ > 0) {
+         int i;
+         for (i = 0; i < bufferCapacity_; ++i) {
+            setToZero(corr_[i]);
+            nCorr_[i] = 0;
+         }
+         for (i = 0; i < ensembleCapacity_; ++i) {
+            buffers_[i].clear();
+         }
+      }
    }
-
+   
    /*
-   * Save internal state to archive.
+   * Allocate arrays and CyclicBuffer (private method).
    */
    template <typename Data, typename Product>
-   void AutoCorrArray<Data, Product>::save(Serializable::OArchive &ar)
-   { ar & *this; }
-
-   /*
-   * Serialize this AutoCorrArray.
-   */
-   template <typename Data, typename Product>
-   template <class Archive>
-   void AutoCorrArray<Data, Product>::serialize(Archive& ar,
-                                                const unsigned int version)
-   {
-      AutoCorrArrayStage<Data, Product>::serialize(ar, version);
-      ar & ensembleCapacity_;
-      ar & bufferCapacity_;
-      ar & blockFactor_;
-      ar & nEnsemble_;
-      ar & sum_;
-      ar & nSample_;
+   void AutoCorrArray<Data, Product>::allocate()
+   { 
+      if (bufferCapacity_ > 0) { 
+         // Allocate autocorrelation accumulators
+         corr_.allocate(bufferCapacity_);
+         nCorr_.allocate(bufferCapacity_);
+   
+         // Allocate buffers
+         buffers_.allocate(ensembleCapacity_);
+         for (int i=0; i < ensembleCapacity_; ++i) {
+            buffers_[i].allocate(bufferCapacity_);
+         }
+      }
+      clear();
    }
-
+   
    /*
    * Sample a single value from a time sequence.
    */
    template <typename Data, typename Product>
-   void AutoCorrArray<Data, Product>::sample(Array<Data>& values, std::ostream* outFilePtr)
+   void AutoCorrArray<Data, Product>::sample(const Array<Data>& values)
    {
-      AutoCorrArrayStage<Data, Product>::sample(values);
-
-      for (int i=0; i < nEnsemble_; ++i) {
-         sum_ += values[i];
-      }
-
-      if (outFilePtr) {
-         for (int i=0; i < ensembleCapacity_; ++i) {
-            write<Data>( *outFilePtr, values[i] );
-            *outFilePtr << "	";
-         }
-         *outFilePtr << std::endl;
-      }
+      int i, j;
       ++nSample_;
-   }
 
-   /*
-   * Sample an ensemble of values.
-   */
-   template <typename Data, typename Product>
-   void AutoCorrArray<Data, Product>::sample(Array<Data>& values)
-   {
-      std::ostream* outFilePtr = 0;
-      sample(values, outFilePtr);
-   }
-
-   /*
-   * Final output.
-   */
-   template <typename Data, typename Product>
-   void AutoCorrArray<Data, Product>::output(std::ostream& outFile) 
-   {
-      Data    ave;
-      Product autocorr;
-      Product aveSq;
-
-      ave  = sum_;
-      ave /= double(nSample_*nEnsemble_);
-      aveSq = product(ave, ave);
-
-      AutoCorrArrayStage<Data, Product>* ptr = 0;
-      int n = descendants_.size();
-      for (int i=0; i<n; ++i) {
-         ptr = descendants_[i];
-         if (i==0) {
-            for (int j=0; j < ptr->bufferSize(); ++j) {
-               autocorr = ptr->corr(j)/double(ptr->nCorr(j)*nEnsemble_);
-               autocorr = autocorr - aveSq;
-               outFile << j;
-               write<Product>(outFile, autocorr);
-               outFile << std::endl;
-            }
-         } else {
-            int minLagIndex = int(bufferCapacity_/blockFactor_);
-            for (int j=minLagIndex; j < ptr->bufferSize(); ++j) {
-               autocorr = ptr->corr(j)/double(ptr->nCorr(j)*nEnsemble_);
-               autocorr = autocorr - aveSq;
-               outFile << j * pow((double)blockFactor_, i);
-               write<Product>(outFile, autocorr);
-               outFile << std::endl;
-            }
-         }
+      for (i = 0; i < nEnsemble_; ++i) {
+         sum_ += values[i];
+         buffers_[i].append(values[i]);
       }
+      
+      int bufferSize = buffers_[0].size();
+      for (j=0; j < bufferSize; ++j) {
+         for (i = 0; i < nEnsemble_; ++i) {
+            corr_[j] += product(buffers_[i][j], values[i]);
+         }
+         ++nCorr_[j];
+      };
    }
+   
+   /*
+   * Return capacity of history buffer for each sequence.
+   */
+   template <typename Data, typename Product>
+   int AutoCorrArray<Data, Product>::bufferCapacity() const
+   {  return bufferCapacity_; }
+
+   /*
+   * Return number of independent sequences.
+   */
+   template <typename Data, typename Product>
+   int AutoCorrArray<Data, Product>::nEnsemble() const
+   {  return nEnsemble_; }
+
+   /*
+   * Return number of sampled values.
+   */
+   template <typename Data, typename Product>
+   int AutoCorrArray<Data, Product>::nSample() const
+   {  return nSample_; }
 
    /*
    * Return average of sampled values.
@@ -422,6 +380,27 @@ namespace Util
    }
 
    /*
+   * Final output.
+   */
+   template <typename Data, typename Product>
+   void AutoCorrArray<Data, Product>::output(std::ostream& outFile) 
+   {
+      Product autocorr;
+      // Product aveSq;
+      // Data    ave = average();
+   
+      // Calculate and output autocorrelation
+      // aveSq = product(ave, ave);
+      int bufferSize = buffers_[0].size();
+      for (int i = 0; i < bufferSize; ++i) {
+         autocorr = corr_[i]/double(nCorr_[i]*nEnsemble_);
+         //autocorr = autocorr - aveSq;
+         //outFile << Int(i) << Dbl(autocorr) << Int(nCorr_[i]) << std::endl;
+         outFile << Int(i) << Dbl(autocorr) << std::endl;
+      }
+   }
+   
+   /*
    *  Return correlation time in unit of sampling interval  
    */
    template <typename Data, typename Product>
@@ -429,140 +408,43 @@ namespace Util
    {
       Data    ave;
       Product aveSq, variance, autocorr, sum;
-
+      int     bufferSize = buffers_[0].size();
+   
+      // Calculate average of sampled values
       ave  = sum_;
       ave /= double(nSample_*nEnsemble_);
       aveSq = product(ave, ave);
-
+      variance = corr_[0]/double(nCorr_[0]*nEnsemble_);
+      variance = variance - aveSq;
+   
+      // Sum over autocorrelation function
       setToZero(sum);
-
-      AutoCorrArrayStage<Data, Product>* ptr = 0;
-      int n = descendants_.size();
-      long totalTime;
-      if (n == 1) {
-         totalTime = descendants_[0]->bufferSize() - 1;
-      } else {
-         totalTime = descendants_[n-1]->bufferSize() - 1;
-         totalTime *= pow((double)blockFactor_, n-1);
+      for (int i = 1; i < bufferSize/2; ++i) {
+         autocorr = corr_[i]/double(nCorr_[i]*nEnsemble_);
+         autocorr = autocorr - aveSq;
+         sum += autocorr;
       }
-      totalTime /= 2;
-
-      long time = 0;
-      int i, j;
-      for (i=0; i<n; ++i) {
-         ptr = descendants_[i];
-         if (i==0) {
-            variance = ptr->corr(0)/double(ptr->nCorr(0)*nEnsemble_);
-            variance = variance - aveSq;
-            for (j=1; j < ptr->bufferSize(); ++j) {
-               time = j;
-               if (time > totalTime)
-                  break;
-               autocorr = ptr->corr(j)/double(ptr->nCorr(j)*nEnsemble_);
-               autocorr = autocorr - aveSq;
-               sum += autocorr;
-            }
-         } else {
-            int minLagIndex = int(bufferCapacity_/blockFactor_);
-            for (j=minLagIndex; j < ptr->bufferSize(); ++j) {
-               time = j*pow((double)blockFactor_, i);
-               if (time > totalTime)
-                  break;
-               autocorr = ptr->corr(j)/double(ptr->nCorr(j)*nEnsemble_);
-               autocorr = autocorr - aveSq;
-               sum += autocorr;
-            }
-         }
-         if ( j != ptr->bufferSize() )
-            break;
-      }
-
       sum /= variance;
       return sum; 
    }
-
+  
    /*
- *    * Return autocorrelation at a given lag time index
- *       * 
- *          * \param t the lag time index
- *             */
+   * Serialize this AutoCorrArray.
+   */
    template <typename Data, typename Product>
-   Product AutoCorrArray<Data, Product>::autoCorrelation(int t) const
+   template <class Archive>
+   void AutoCorrArray<Data, Product>::serialize(Archive& ar, 
+                                                const unsigned int version)
    {
-      Data    ave;
-      Product autocorr;
-      Product aveSq;
-
-      ave  = sum_;
-      ave /= double(nSample_*nEnsemble_);
-      aveSq = product(ave, ave);
-
-      AutoCorrArrayStage<Data, Product>* ptr = 0;
-      int n = descendants_.size();
-      long totalTime;
-      if (n == 1) {
-         totalTime = descendants_[n-1]->bufferSize() - 1;
-      } else {
-         totalTime = descendants_[n-1]->bufferSize() - 1;
-         totalTime *= pow((double)blockFactor_, n-1);
-      }
-      assert(t < totalTime);
-
-      if (n == 1) {
-         ptr = descendants_[0];
-         autocorr = ptr->corr(t)/double(ptr->nCorr(t)*nEnsemble_);
-         autocorr = autocorr - aveSq;
-      } else {
-         for (int i=1; i < n; ++i) {
-            ptr = descendants_[i];
-            int lagMultiplier = pow((double)blockFactor_, i-1);
-            int minLagIndex = int(bufferCapacity_/blockFactor_);
-            int maxLagIndex = ptr->bufferSize() - 1;
-            if (minLagIndex*lagMultiplier <= t <= maxLagIndex*lagMultiplier) {
-               int j = int(t/lagMultiplier);
-               autocorr = ptr->corr(j)/double(ptr->nCorr(j))*nEnsemble_;
-               autocorr = autocorr - aveSq;
-               break;
-            }
-         }
-      }
-      return autocorr;
-    }
-
-   /*
-   * Return number of independent sequences.
-   */
-   template <typename Data, typename Product>
-   int AutoCorrArray<Data, Product>::nEnsemble() const
-   {  return nEnsemble_; }
-
-   /*
-   * Return capacity of history buffer for each sequence.
-   */
-   template <typename Data, typename Product>
-   int AutoCorrArray<Data, Product>::bufferCapacity() const
-   {  return bufferCapacity_; }
-
-   /*
-   * Return block factor.
-   */
-   template <typename Data, typename Product>
-   int AutoCorrArray<Data, Product>::blockFactor() const
-   {  return blockFactor_; }
-
-   /*
-   * Return number of sampled values.
-   */
-   template <typename Data, typename Product>
-   int AutoCorrArray<Data, Product>::nSample() const
-   {  return nSample_; }
-
-   /*
-   * Append pointer to a descendant to descendants_ array.
-   */
-   template <typename Data, typename Product>
-   void AutoCorrArray<Data, Product>::registerDescendant(AutoCorrArrayStage<Data, Product>* descendantPtr)
-   {  descendants_.push_back(descendantPtr); }
+      ar & ensembleCapacity_;
+      ar & bufferCapacity_;
+      ar & nEnsemble_;
+      ar & buffers_; 
+      ar & corr_;
+      ar & nCorr_;
+      ar & sum_;
+      ar & nSample_;
+   }
 
 }
 #endif
