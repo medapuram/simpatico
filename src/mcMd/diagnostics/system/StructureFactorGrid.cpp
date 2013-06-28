@@ -171,18 +171,19 @@ namespace McMd
          nStar_ = (hMax_ + 1 )*(hMax_ + 1)*(hMax_ + 1);
          starIds_.allocate(nStar_);
          starSizes_.allocate(nStar_);
-         // Create tetragonal point group
+
+         // Create orthorhombic point group
          PointGroup group;
          PointSymmetry a, b, c;
 
          a.R(0,0) =  -1;
          a.R(1,1) =  1;
          a.R(2,2) =  1;
-   
+
          b.R(0,0) =  1;
          b.R(1,1) =  -1;
          b.R(2,2) =  1;
-   
+
          c.R(0,0) =  1;
          c.R(1,1) =  1;
          c.R(2,2) =  -1;
@@ -191,7 +192,7 @@ namespace McMd
          group.add(b);
          group.add(a);
          group.makeCompleteGroup();
-   
+
          // Create grid of wavevectors
          FSArray<IntVector, 16> star;
          i = 0;
@@ -215,10 +216,10 @@ namespace McMd
          }
          if (i != nStar_) {
             UTIL_THROW("Error");
-         } 
+         }
          if (j != nWave_) {
             UTIL_THROW("Error");
-         } 
+         }
       }
 
       // Clear accumulators
@@ -344,7 +345,7 @@ namespace McMd
             }
             average = average/double(size);
             logFile_ << Dbl(average, 20, 8);
-         } 
+         }
          logFile_ << std::endl;
       }
       logFile_ << std::endl;
@@ -368,24 +369,6 @@ namespace McMd
       // Loop over waves to output structure factor
       for (i = 0; i < nStar_; ++i) {
          size = starSizes_[i];
-
-         #if 0
-         // Output individual waves in star
-         k = starIds_[i];
-         for (m = 0; m < size; ++m) {
-            for (n = 0; n < Dimension; ++n) {
-               outputFile_ << Int(waveIntVectors_[k][n], 5);
-            }
-            outputFile_ << Dbl(waveVectors_[k].abs(), 20, 8);
-            for (j = 0; j < nMode_; ++j) {
-               value = structureFactors_(k, j)/double(nSample_);
-               outputFile_ << Dbl(value, 20, 8);
-            }
-            outputFile_ << std::endl;
-            ++k;
-         }
-         outputFile_ << std::endl;
-         #endif
 
          k = starIds_[i];
          for (n = 0; n < Dimension; ++n) {

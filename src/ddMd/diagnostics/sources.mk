@@ -11,6 +11,7 @@ ddMd_diagnostics_SRCS=\
      $(SRC_DIR)/ddMd/diagnostics/StructureFactor.cpp\
      $(SRC_DIR)/ddMd/diagnostics/StructureFactorGrid.cpp\
      $(SRC_DIR)/ddMd/diagnostics/AsymmSF.cpp\
-     $(SRC_DIR)/ddMd/diagnostics/AsymmSFGrid.cpp
+     $(SRC_DIR)/ddMd/diagnostics/AsymmSFGrid.cpp\
+     $(SRC_DIR)/ddMd/diagnostics/OrderParamNucleation.cpp
 
 ddMd_diagnostics_OBJS=$(ddMd_diagnostics_SRCS:.cpp=.o)

@@ -24,7 +24,11 @@ namespace DdMd
    using namespace Util;
 
    /**
+<<<<<<< HEAD
    * StructureFactor evaluates structure factors in Fourier space.
+=======
+   * AsymmSF evaluates structure factors in Fourier space.
+>>>>>>> aa9ae70337488fc75e8122a0a42843908f6d812d
    *
    * A structure factor for a wavevector k and mode m defined as an 
    * expectation value
@@ -54,9 +58,15 @@ namespace DdMd
    * orthorhombic unit cell might look like this:
    *
    * \code
+<<<<<<< HEAD
    * StructureFactor{
    *    interval                      1000
    *    outputFileName    StructureFactor
+=======
+   * AsymmSF{
+   *    interval                      1000
+   *    outputFileName    AsymmSF
+>>>>>>> aa9ae70337488fc75e8122a0a42843908f6d812d
    *    nMode                            1
    *    modes                     1      1
    *                              0     -1
@@ -201,4 +211,8 @@ namespace DdMd
    };
 
 }
+<<<<<<< HEAD
 #endif
+=======
+#endif
+>>>>>>> aa9ae70337488fc75e8122a0a42843908f6d812d

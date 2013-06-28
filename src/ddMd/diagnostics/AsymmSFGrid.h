@@ -108,4 +108,8 @@ namespace DdMd
    };
 
 }
+<<<<<<< HEAD
 #endif
+=======
+#endif
+>>>>>>> aa9ae70337488fc75e8122a0a42843908f6d812d
