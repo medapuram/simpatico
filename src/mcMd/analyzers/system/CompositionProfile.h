@@ -110,12 +110,18 @@ namespace McMd
 
       /// Distribution statistical accumulators.
       DArray<Distribution> accumulators_;
+
+      /// Distribution statistical accumulators.
+      DArray<Distribution> currentAccumulators_;
       
       /// Array of Miller index vectors for directions.
       DArray<IntVector> intVectors_;
 
       /// Array of direction vectors.
       DArray<Vector> waveVectors_;
+      
+      // Array of log file descriptors
+      DArray<std::ofstream> logFiles_;
 
       /// Number of directions.
       int  nDirection_;
@@ -126,9 +132,15 @@ namespace McMd
       /// Number of atom types, copied from Simulation::nAtomType().
       int  nAtomType_;
 
+      /// Number of bins for density profile
+      int nBins_;
+      
       /// Has readParam been called?
       bool isInitialized_;
 
+       /// True if this is the first step
+      bool isFirstStep_;
+      
       /**
       * Update wavevectors.
       */
