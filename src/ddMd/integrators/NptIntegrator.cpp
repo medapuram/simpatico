@@ -9,6 +9,7 @@
 */
 
 #include "NptIntegrator.h"
+
 #include <ddMd/simulation/Simulation.h>
 #include <ddMd/storage/AtomStorage.h>
 #include <ddMd/storage/AtomIterator.h>
@@ -48,7 +49,7 @@ namespace DdMd
       read<double>(in, "dt", dt_);
       read<double>(in, "tauT", tauT_);
       read<double>(in, "tauP", tauP_);
-      read<LatticeSystem>(in, "mode", mode_);
+      read<int>(in, "nDegree", nDegree_);
       Integrator::readParameters(in);
 
       // Allocate memory
@@ -67,7 +68,7 @@ namespace DdMd
       loadParameter<double>(ar, "dt", dt_);
       loadParameter<double>(ar, "tauT", tauT_);
       loadParameter<double>(ar, "tauP", tauP_);
-      loadParameter<LatticeSystem>(ar, "mode", mode_);
+      loadParameter<int>(ar, "nDegree", nDegree_);
       Integrator::loadParameters(ar);
 
       MpiLoader<Serializable::IArchive> loader(*this, ar);
@@ -89,7 +90,7 @@ namespace DdMd
       ar << dt_;
       ar << tauT_;
       ar << tauP_;
-      ar << mode_;
+      ar << nDegree_;
       Integrator::save(ar);
       ar << xi_;
       ar << eta_;
@@ -171,15 +172,15 @@ namespace DdMd
 
          // Advance barostat (first half of update)
          double V = sim.boundary().volume();
-         if (mode_ == Cubic) {
+         if (nDegree_ == 1) {
             nu_[0] += (1.0/2.0)*dt_*V/W*(P_curr - P_target_) + mtk_term;
             nu_[1] = nu_[2] = nu_[0];
-         } else if (mode_ == Tetragonal) {
+         } else if (nDegree_ == 2) {
             nu_[0] += (1.0/2.0)*dt_*V/W*(P_curr_diag_[0] - P_target_) + mtk_term;
             nu_[1] += (1.0/2.0)*dt_*V/W*((1.0/2.0)*(P_curr_diag_[1] + P_curr_diag_[2]) - P_target_) 
                       + mtk_term;
             nu_[2] = nu_[1];
-         } else if (mode_  == Orthorhombic) {
+         } else if (nDegree_  == 3) {
             nu_[0] += (1.0/2.0)*dt_*V/W*(P_curr_diag_[0] - P_target_) + mtk_term;
             nu_[1] += (1.0/2.0)*dt_*V/W*(P_curr_diag_[1] - P_target_) + mtk_term;
             nu_[2] += (1.0/2.0)*dt_*V/W*(P_curr_diag_[2] - P_target_) + mtk_term;
@@ -362,14 +363,14 @@ namespace DdMd
          double mtk_term = (1.0/2.0)*dt_*T_kinetic_/W;
 
          double V = sim.boundary().volume();
-         if (mode_ == Cubic) {
+         if (nDegree_ == 1) {
             nu_[0] += (1.0/2.0)*dt_*V/W*(P_curr - P_target_) + mtk_term;
             nu_[1] = nu_[2] = nu_[0];
-         } else if (mode_ == Tetragonal) {
+         } else if (nDegree_ == 2) {
             nu_[0] += (1.0/2.0)*dt_*V/W*(P_curr_diag_[0] - P_target_) + mtk_term;
             nu_[1] += (1.0/2.0)*dt_*V/W*((1.0/2.0)*(P_curr_diag_[1]+P_curr_diag_[2]) - P_target_) + mtk_term;
             nu_[2] = nu_[1];
-         } else if (mode_  == Orthorhombic) {
+         } else if (nDegree_  == 3) {
             nu_[0] += (1.0/2.0)*dt_*V/W*(P_curr_diag_[0] - P_target_) + mtk_term;
             nu_[1] += (1.0/2.0)*dt_*V/W*(P_curr_diag_[1] - P_target_) + mtk_term;
             nu_[2] += (1.0/2.0)*dt_*V/W*(P_curr_diag_[2] - P_target_) + mtk_term;

@@ -58,7 +58,7 @@ namespace DdMd
       * \param ar output/saving archive
       */
       virtual void save(Serializable::OArchive &ar);
-  
+
    protected:
 
       /**
@@ -93,14 +93,14 @@ namespace DdMd
       double P_target_;
       double T_kinetic_;
       Vector P_curr_diag_;
-      LatticeSystem mode_;
+      int nDegree_;
       unsigned int ndof_;
 
       Vector exp_v_fac_;
       Vector sinhx_fac_v_;
       double mtk_term_2_;
       DArray<double> prefactors_;
-
+ 
    };
 
 }
