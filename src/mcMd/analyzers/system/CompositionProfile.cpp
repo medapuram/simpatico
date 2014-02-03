@@ -27,8 +27,8 @@ namespace McMd
    /// Constructor.
    CompositionProfile::CompositionProfile(System& system) 
     : SystemAnalyzer<System>(system),
-      isInitialized_(false),
-      isFirstStep_(true)
+      isFirstStep_(true),
+      isInitialized_(false)
    {  setClassName("CompositionProfile"); }
 
    CompositionProfile::~CompositionProfile() 
@@ -44,6 +44,8 @@ namespace McMd
       read<int>(in, "nDirection", nDirection_);
       intVectors_.allocate(nDirection_);
       readDArray<IntVector>(in, "intVectors", intVectors_, nDirection_);
+      read<int>(in, "nBins", nBins_);
+
       read<int>(in, "nBins", nBins_);
 
       nAtomType_ = system().simulation().nAtomType();
@@ -115,7 +117,6 @@ namespace McMd
             min = 0.0;
             max = 1.0;
 
-            // number of bins in histogram = int(((max-min)/0.05));
             accumulators_[i+j*nDirection_].setParam(min, max, nBins_);
             currentAccumulators_[i+j*nDirection_].setParam(min, max, nBins_);
          }
@@ -140,13 +141,13 @@ namespace McMd
       blengths = system().boundary().lengths();
 
       if (isAtInterval(iStep))  {
-
          Vector  position;
          double  product;
          System::ConstMoleculeIterator  molIter;
          Molecule::ConstAtomIterator  atomIter;
          int  nSpecies, iSpecies, typeId;
 
+         // Clear accumulators for the current timestep
          for (int i = 0; i < nDirection_; ++i) {
             for (int j = 0; j < nAtomType_; ++j){
                currentAccumulators_[i+j*nDirection_].clear();
@@ -182,7 +183,7 @@ namespace McMd
                   for (int i = 0; i < Dimension; ++i) {
                      position[i] /= blengths[i];
                   }
-		  // Loop over direction vectors
+	              // Loop over direction vectors
                   for (int i = 0; i < nDirection_; ++i) {
                      product = position.dot(waveVectors_[i]);
                      product /= waveVectors_[i].abs();
@@ -213,6 +214,22 @@ namespace McMd
 
          isFirstStep_ = false;
 
+      // Output to log files
+      for (int i = 0; i < nDirection_; ++i) {
+         for (int j = 0; j < nAtomType_; ++j){
+            currentAccumulators_[i+j*nDirection_].output(logFiles_[i+j*nDirection_]);
+            logFiles_[i+j*nDirection_] << std::endl;
+         }
+      }
+
+      // Close log files
+      for (int i = 0; i < nDirection_; ++i) {
+         for (int j = 0; j < nAtomType_; ++j){
+            logFiles_[i+j*nDirection_].close();
+         }
+      }
+
+      isFirstStep_ = false;
       }
 
    }

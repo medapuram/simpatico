@@ -123,6 +123,9 @@ namespace McMd
       // Array of log file descriptors
       DArray<std::ofstream> logFiles_;
 
+      // Array of log file descriptors
+      DArray<std::ofstream> logFiles_;
+
       /// Number of directions.
       int  nDirection_;
 
@@ -134,13 +137,16 @@ namespace McMd
 
       /// Number of bins for density profile
       int nBins_;
-      
+     
+      /// True if this is the first step
+      bool isFirstStep_;
+
       /// Has readParam been called?
       bool isInitialized_;
 
-       /// True if this is the first step
-      bool isFirstStep_;
-      
+      /// Distribution statistical accumulators.
+      DArray<Distribution> currentAccumulators_;
+
       /**
       * Update wavevectors.
       */
