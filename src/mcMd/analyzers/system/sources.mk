@@ -4,6 +4,7 @@ mcMd_analyzers_system_=\
     mcMd/analyzers/system/BlockRadiusGyration.cpp \
     mcMd/analyzers/system/ComMSD.cpp \
     mcMd/analyzers/system/CompositionProfile.cpp \
+    mcMd/analyzers/system/LocalCompositionProfile.cpp \
     mcMd/analyzers/system/DumpConfig.cpp \
     mcMd/analyzers/system/IntraPairAutoCorr.cpp \
     mcMd/analyzers/system/IntraStructureFactor.cpp \

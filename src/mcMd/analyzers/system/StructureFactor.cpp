@@ -134,6 +134,7 @@ namespace McMd
       if (isAtInterval(iStep))  {
 
          fileMaster().openOutputFile(outputFileName("_max.dat"), outputFile_, !isFirstStep_);
+         //fileMaster().openOutputFile(outputFileName(".dat"), logFile_, !isFirstStep_);
          isFirstStep_ = false;
 
          Vector  position;
@@ -164,13 +165,11 @@ namespace McMd
  
 		  // Loop over wavevectors
                   for (i = 0; i < nWave_; ++i) {
-               
                      product = position.dot(waveVectors_[i]);
                      expFactor = exp( product*Constants::Im );
                      for (j = 0; j < nMode_; ++j) {
                         fourierModes_(i, j) += modes_(j, typeId)*expFactor;
                      }
-		 
                   }
   
                }
@@ -178,9 +177,25 @@ namespace McMd
 
          }
 
-         // Increment structure factors
          double volume = system().boundary().volume();
          double norm;
+         /*
+         for (i = 0; i < nWave_; ++i) {
+            for (int k = 0; k < Dimension; ++k) {
+               logFile_ << Int(waveIntVectors_[i][k], 5);
+            }
+            logFile_ << Dbl(waveVectors_[i].abs(), 20, 8);
+            for (j = 0; j < nMode_; ++j) {
+               norm = std::norm(fourierModes_(i, j));
+               logFile_ << Dbl(norm/volume, 18, 8);
+            }
+            logFile_ << std::endl;
+         }
+         logFile_ << std::endl;
+         logFile_.close();
+         */
+
+         // Increment StructureFactors
          for (j = 0; j < nMode_; ++j) {
             double maxValue = 0.0;
             IntVector maxIntVector;
@@ -201,11 +216,10 @@ namespace McMd
             outputFile_ << Dbl(maxValue,20,8);
             outputFile_ << std::endl;
          }
-
-         ++nSample_;
-
          outputFile_ << std::endl;
          outputFile_.close();
+
+         ++nSample_;
       }
 
    }
@@ -239,7 +253,7 @@ namespace McMd
       outputFile_.close();
 
       // Output structure factors to one file
-      fileMaster().openOutputFile(outputFileName(".dat"), outputFile_);
+      fileMaster().openOutputFile(outputFileName("_avg.dat"), outputFile_);
       double      value;
       int         i, j, k;
       for (i = 0; i < nWave_; ++i) {

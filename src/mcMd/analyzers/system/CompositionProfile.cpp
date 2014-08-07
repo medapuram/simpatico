@@ -46,8 +46,6 @@ namespace McMd
       readDArray<IntVector>(in, "intVectors", intVectors_, nDirection_);
       read<int>(in, "nBins", nBins_);
 
-      read<int>(in, "nBins", nBins_);
-
       nAtomType_ = system().simulation().nAtomType();
       waveVectors_.allocate(nDirection_);
       accumulators_.allocate(nDirection_*nAtomType_);
@@ -197,22 +195,6 @@ namespace McMd
          }
 
          ++nSample_;
-
-         for (int i = 0; i < nDirection_; ++i) {
-            for (int j = 0; j < nAtomType_; ++j){
-               currentAccumulators_[i+j*nDirection_].output(logFiles_[i+j*nDirection_]);
-               logFiles_[i+j*nDirection_] << std::endl;
-            }
-         }
-
-         // Close log files
-         for (int i = 0; i < nDirection_; ++i) {
-            for (int j = 0; j < nAtomType_; ++j){
-               logFiles_[i+j*nDirection_].close();
-            }
-         }
-
-         isFirstStep_ = false;
 
       // Output to log files
       for (int i = 0; i < nDirection_; ++i) {

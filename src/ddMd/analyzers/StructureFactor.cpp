@@ -280,7 +280,7 @@ namespace DdMd
          outputFile_.close();
 
          // Output structure factors to one *.dat file
-         simulation().fileMaster().openOutputFile(outputFileName(".dat"), 
+         simulation().fileMaster().openOutputFile(outputFileName("_avg.dat"), 
                                                   outputFile_);
          double      value;
          int         i, j, k;

@@ -298,7 +298,6 @@ namespace McMd
 
       StructureFactor::sample(iStep);
 
-
       // Log structure factors
       double volume = system().boundary().volume();
       double norm;
@@ -348,25 +347,6 @@ namespace McMd
       // Loop over waves to output structure factor
       for (i = 0; i < nStar_; ++i) {
          size = starSizes_[i];
-
-         #if 0
-         // Output individual waves in star
-         k = starIds_[i];
-         for (m = 0; m < size; ++m) {
-            for (n = 0; n < Dimension; ++n) {
-               outputFile_ << Int(waveIntVectors_[k][n], 5);
-            }
-            outputFile_ << Dbl(waveVectors_[k].abs(), 20, 8);
-            for (j = 0; j < nMode_; ++j) {
-               value = structureFactors_(k, j)/double(nSample_);
-               outputFile_ << Dbl(value, 20, 8);
-            }
-            outputFile_ << std::endl;
-            ++k;
-         }
-         outputFile_ << std::endl;
-         #endif
-
          k = starIds_[i];
          for (n = 0; n < Dimension; ++n) {
             outputFile_ << Int(waveIntVectors_[k][n], 5);

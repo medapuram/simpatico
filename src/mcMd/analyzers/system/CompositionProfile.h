@@ -111,18 +111,12 @@ namespace McMd
       /// Distribution statistical accumulators.
       DArray<Distribution> accumulators_;
 
-      /// Distribution statistical accumulators.
-      DArray<Distribution> currentAccumulators_;
-      
       /// Array of Miller index vectors for directions.
       DArray<IntVector> intVectors_;
 
       /// Array of direction vectors.
       DArray<Vector> waveVectors_;
       
-      // Array of log file descriptors
-      DArray<std::ofstream> logFiles_;
-
       // Array of log file descriptors
       DArray<std::ofstream> logFiles_;
 
