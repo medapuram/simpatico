@@ -1,8 +1,8 @@
-OBJ_DIR_REL =../../..
-include $(OBJ_DIR_REL)/config.mk
-include $(OBJ_DIR)/mcMd/config.mk
-include $(OBJ_DIR)/inter/config.mk
-include $(OBJ_DIR)/util/config.mk
+BLD_DIR_REL =../../..
+include $(BLD_DIR_REL)/config.mk
+include $(BLD_DIR)/mcMd/config.mk
+include $(BLD_DIR)/inter/config.mk
+include $(BLD_DIR)/util/config.mk
 include $(SRC_DIR)/mcMd/patterns.mk
 include $(SRC_DIR)/mcMd/sources.mk
 include $(SRC_DIR)/inter/sources.mk
@@ -11,12 +11,13 @@ include $(SRC_DIR)/mcMd/tests/mdSimulation/sources.mk
 
 TEST=mcMd/tests/mdSimulation/Test
 
-all: $(mcMd_tests_mdSimulation_OBJS) $(OBJ_DIR)/$(TEST)
+all: $(mcMd_tests_mdSimulation_OBJS)
 
 clean:
-	rm -f $(mcMd_tests_mdSimulation_OBJS) $(mcMd_tests_mdSimulation_OBJS:.o=.d)
-	rm -f $(OBJ_DIR)/$(TEST) 
-	make clean-outputs
+	rm -f $(mcMd_tests_mdSimulation_OBJS) 
+	rm -f $(mcMd_tests_mdSimulation_OBJS:.o=.d)
+	rm -f $(mcMd_tests_mdSimulation_OBJS:.o=)
+	$(MAKE) clean-outputs
 
 clean-outputs:
 	rm -f *.rst *.cfg

@@ -132,24 +132,31 @@ public:
       }
 
       domain.readParam(file);
+      buffer.readParam(file);
+
+      atomStorage.associate(domain, boundary, buffer);
       atomStorage.readParam(file);
+   
+      #ifdef INTER_BOND
+      bondStorage.associate(domain, atomStorage, buffer);
       bondStorage.readParam(file);
+      #endif
+   
       #ifdef INTER_ANGLE
       if (hasAngle) {
+         angleStorage.associate(domain, atomStorage, buffer);
          angleStorage.readParam(file);
       }
       #endif
       #ifdef INTER_DIHEDRAL
       if (hasDihedral) {
+         dihedralStorage.associate(domain, atomStorage, buffer);
          dihedralStorage.readParam(file);
       }
       #endif
-      buffer.readParam(file);
+
       configIo.readParam(file);
       file.close();
-
-      // openInputFile("in/config", file);
-      // configIo.readConfig(file, MaskBonded);
 
    }
 

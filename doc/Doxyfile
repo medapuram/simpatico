@@ -672,7 +672,9 @@ INPUT                  = ../src/util \
                          ../src/inter \
                          ../src/mcMd \
                          ../src/ddMd \
+                         ../src/spAn \
                          ../src/test \
+                         ../src/programs.mod \
                          manual
 
 # This tag can be used to specify the character encoding of the source files
@@ -1591,11 +1593,13 @@ INCLUDE_FILE_PATTERNS  =
 # instead of the = operator.
 
 PREDEFINED             = UTIL_MPI \
+                         INTER_BOND \
                          INTER_ANGLE \
                          INTER_DIHEDRAL \
                          INTER_EXTERNAL \
                          MCMD_LINK \
-                         MCMD_PERTURB
+                         MCMD_PERTURB \
+                         DDMD_MODIFIERS 
 
 # If the MACRO_EXPANSION and EXPAND_ONLY_PREDEF tags are set to YES then
 # this tag can be used to specify a list of macro names that should be expanded.

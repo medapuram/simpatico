@@ -1,5 +1,10 @@
+<<<<<<< HEAD
 #ifndef DDMD_VIRIAL_STRESSTENSOR_AVERAGE_H
 #define DDMD_VIRIAL_STRESSTENSOR_AVERAGE_H
+=======
+#ifndef DDMD_VIRIAL_STRESS_TENSOR_AVERAGE_H
+#define DDMD_VIRIAL_STRESS_TENSOR_AVERAGE_H
+>>>>>>> 7454788cb955ae6920d2fc65f1ee1fa595a406d8
 
 /*
 * Simpatico - Simulation Package for Polymeric and Molecular Liquids
@@ -77,8 +82,11 @@ namespace DdMd
 
       /**
       * Dump configuration to file
+<<<<<<< HEAD
       *
       * \param iStep MD step index
+=======
+>>>>>>> 7454788cb955ae6920d2fc65f1ee1fa595a406d8
       */
       virtual void output();
 

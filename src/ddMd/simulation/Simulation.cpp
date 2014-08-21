@@ -19,6 +19,9 @@
 #include <ddMd/configIos/DdMdConfigIo.h>
 #include <ddMd/configIos/SerializeConfigIo.h>
 #include <ddMd/analyzers/AnalyzerManager.h>
+#ifdef DDMD_MODIFIERS
+#include <ddMd/modifiers/ModifierManager.h>
+#endif
 
 #ifndef DDMD_NOPAIR
 #include <ddMd/potentials/pair/PairPotential.h>
@@ -115,6 +118,9 @@ namespace DdMd
       fileMasterPtr_(0),
       configIoPtr_(0),
       serializeConfigIoPtr_(0),
+      #ifdef DDMD_MODIFIERS
+      modifierManagerPtr_(0),
+      #endif
       analyzerManagerPtr_(0),
       #ifndef DDMD_NOPAIR
       pairFactoryPtr_(0),
@@ -189,10 +195,23 @@ namespace DdMd
       // Set connections between member objects
       domain_.setBoundary(boundary_);
       exchanger_.associate(domain_, boundary_, atomStorage_, buffer_);
+      atomStorage_.associate(domain_, boundary_, buffer_);
+      #ifdef INTER_BOND
+      bondStorage_.associate(domain_, atomStorage_, buffer_);
+      #endif
+      #ifdef INTER_ANGLE
+      angleStorage_.associate(domain_, atomStorage_, buffer_);
+      #endif
+      #ifdef INTER_DIHEDRAL
+      dihedralStorage_.associate(domain_, atomStorage_, buffer_);
+      #endif
 
       fileMasterPtr_ = new FileMaster;
       energyEnsemblePtr_ = new EnergyEnsemble;
       boundaryEnsemblePtr_ = new BoundaryEnsemble;
+      #ifdef DDMD_MODIFIERS
+      modifierManagerPtr_ = new ModifierManager(*this);
+      #endif
       analyzerManagerPtr_ = new AnalyzerManager(*this);
    }
 
@@ -257,6 +276,11 @@ namespace DdMd
       if (analyzerManagerPtr_) {
          delete analyzerManagerPtr_;
       }
+      #ifdef DDMD_MODIFIERS
+      if (modifierManagerPtr_) {
+         delete modifierManagerPtr_;
+      }
+      #endif
       if (fileMasterPtr_) {
          delete fileMasterPtr_;
       }
@@ -302,7 +326,7 @@ namespace DdMd
            nSystem = atoi(sArg);
            break;
          case '?':
-           std::cout << "Unknown option -" << optopt << std::endl;
+           Log::file() << "Unknown option -" << optopt << std::endl;
          }
       }
 
@@ -526,7 +550,9 @@ namespace DdMd
          msg += className;
          UTIL_THROW("msg.c_str()");
       }
-
+      #ifdef DDMD_MODIFIERS
+      readParamCompositeOptional(in, *modifierManagerPtr_);
+      #endif
       readParamComposite(in, random_);
       readParamComposite(in, *analyzerManagerPtr_);
 
@@ -716,7 +742,9 @@ namespace DdMd
          msg += className;
          UTIL_THROW("msg.c_str()");
       }
-
+      #ifdef DDMD_MODIFIERS
+      loadParamCompositeOptional(ar, *modifierManagerPtr_);
+      #endif
       loadParamComposite(ar, random_);
       loadParamComposite(ar, *analyzerManagerPtr_);
 
@@ -872,13 +900,16 @@ namespace DdMd
       }
       #endif
 
-      // Save ensembles, integrator, random, analyzers
+      // Save ensembles, integrator, modifiers, random, analyzers
       saveEnsembles(ar);
       std::string name = integrator().className();
       ar << name;
       integrator().save(ar);
+      #ifdef DDMD_MODIFIERS
+      modifierManager().saveOptional(ar);
+      #endif
       random_.save(ar);
-      analyzerManagerPtr_->save(ar);
+      analyzerManager().save(ar);
    }
 
    /*
@@ -1381,23 +1412,7 @@ namespace DdMd
    * If reverseUpdateFlag(), also zero ghost atom forces.
    */
    void Simulation::zeroForces()
-   {
-      // Zero local atoms
-      AtomIterator atomIter;
-      atomStorage_.begin(atomIter);
-      for( ; atomIter.notEnd(); ++atomIter){
-         atomIter->force().zero();
-      }
-
-      // If using reverse communication, zero ghost atoms
-      if (reverseUpdateFlag_) {
-         GhostIterator ghostIter;
-         atomStorage_.begin(ghostIter);
-         for( ; ghostIter.notEnd(); ++ghostIter){
-            ghostIter->force().zero();
-         }
-      }
-   }
+   {  atomStorage_.zeroForces(reverseUpdateFlag_); }
 
    /*
    * Compute forces for all atoms.
@@ -1887,7 +1902,6 @@ namespace DdMd
    {
       if (configIoPtr_ == 0) {
          configIoPtr_ = new DdMdConfigIo(*this);
-         configIoPtr_->initialize();
       }
       return *configIoPtr_;
    }
@@ -1899,7 +1913,6 @@ namespace DdMd
    {
       if (serializeConfigIoPtr_ == 0) {
          serializeConfigIoPtr_ = new SerializeConfigIo(*this);
-         serializeConfigIoPtr_->initialize();
       }
       return *serializeConfigIoPtr_;
    }
@@ -2078,7 +2091,6 @@ namespace DdMd
          delete configIoPtr_;
       }
       configIoPtr_ = ptr;
-      configIoPtr_->initialize();
    }
 
    // --- Validation ---------------------------------------------------

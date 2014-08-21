@@ -12,6 +12,8 @@
 #include "AtomStorage.h"
 #include <util/format/Int.h>
 #include <util/mpi/MpiLoader.h>  
+#include <ddMd/communicate/GroupDistributor.tpp>   // member
+#include <ddMd/communicate/GroupCollector.tpp>     // member
 
 //#define DDMD_GROUP_STORAGE_DEBUG
 
@@ -31,6 +33,8 @@ namespace DdMd
       newPtr_(0),
       capacity_(0),
       totalCapacity_(0),
+      maxNGroupLocal_(0),
+      maxNGroup_(0),
       nTotal_(0)
    {  emptyGroups_.reserve(128); }
  
@@ -40,6 +44,17 @@ namespace DdMd
    template <int N>
    GroupStorage<N>::~GroupStorage()
    {}
+
+   /*
+   * Create associations for distributor and collector.
+   */
+   template <int N>
+   void GroupStorage<N>::associate(Domain& domain, AtomStorage& atomStorage, 
+                                   Buffer& buffer)
+   {
+      distributor_.associate(domain, atomStorage, *this, buffer);
+      collector_.associate(domain, *this, buffer);
+   }
 
    /*
    * Set parameters and allocate memory.
@@ -110,6 +125,7 @@ namespace DdMd
       for (int i = 0; i < totalCapacity_; ++i) {
          groupPtrs_[i] = 0;
       }
+
    }
 
    // Local group mutators
@@ -146,7 +162,7 @@ namespace DdMd
    * Register new local Group in internal data structures.
    */ 
    template <int N>
-   Group<N>* GroupStorage<N>::add()
+   void GroupStorage<N>::add()
    {
 
       // Preconditions
@@ -155,7 +171,7 @@ namespace DdMd
       }
       int groupId = newPtr_->id();
       if (groupId < 0 || groupId >= totalCapacity_) {
-         std::cout << "groupId = " << groupId << std::endl;
+         Log::file() << "groupId = " << groupId << std::endl;
          UTIL_THROW("Invalid group id");
       }
       if (groupPtrs_[groupId] != 0) {
@@ -167,15 +183,12 @@ namespace DdMd
       groupPtrs_[groupId] = newPtr_;
 
       // Release newPtr_ for reuse.
-      Group<N>* ptr = newPtr_;
       newPtr_ = 0;
 
       // Check maximum.
       if (groupSet_.size() > maxNGroupLocal_) {
          maxNGroupLocal_ = groupSet_.size();
       }
-
-      return ptr;
    }
 
    /*
@@ -198,7 +211,7 @@ namespace DdMd
    {
       int groupId = groupPtr->id();
       if (groupId < 0 || groupId >= totalCapacity_) {
-         std::cout << "Group id = " << groupId << std::endl;
+         Log::file() << "Group id = " << groupId << std::endl;
          UTIL_THROW("Invalid group id, out of range");
       } else if (groupPtrs_[groupId] == 0) {
          UTIL_THROW("Group does not exist on this processor");
@@ -246,7 +259,7 @@ namespace DdMd
 
       // Check consitency of pointers to atoms and atom ids
       Group<N>* ptr;
-      int       i, j;
+      int i, j;
       j = 0;
       for (i = 0; i < totalCapacity_ ; ++i) {
          ptr = groupPtrs_[i];
@@ -445,8 +458,8 @@ namespace DdMd
             UTIL_THROW("nTotal not set");
          }
          if (nAtomGroupTotal != N*nTotal()) {
-            std::cout << "nAtomGroupTotal = " << nAtomGroupTotal << std::endl;
-            std::cout << "nTotal*N        = " << N*nTotal() << std::endl;
+            Log::file() << "nAtomGroupTotal = " << nAtomGroupTotal << std::endl;
+            Log::file() << "nTotal*N        = " << N*nTotal() << std::endl;
             UTIL_THROW("Discrepancy in number of local atoms in Group objects");
          }
       }
@@ -465,7 +478,7 @@ namespace DdMd
    /*
    * Identify groups that span boundaries.
    *
-   * This method is called by exchangeAtoms, after computing plans for
+   * This function is called by exchangeAtoms, after computing plans for
    * exchanging atoms, based on their position, but before exchanging
    * atoms, and before clearing ghosts from any previous exchange.
    *
@@ -482,7 +495,7 @@ namespace DdMd
    *
    * After calculating a ghost communication plan for each group, clear 
    * the pointers to all ghost atoms in the group. The exchangeAtoms 
-   * method will clear the actual ghost atoms from the AtomStorage.
+   * function will clear the actual ghost atoms from the AtomStorage.
    */
    template <int N> void 
    GroupStorage<N>::markSpanningGroups(FMatrix<double, Dimension, 2>& bound, 
@@ -558,25 +571,25 @@ namespace DdMd
                   #if 0 
                   // A complete group may not span both lower (j=0) and upper (j=1) boundaries
                   if (groupIter->plan().ghost(i, 0) && groupIter->plan().ghost(i, 1)) {
-                     std::cout << "Direction " << i << std::endl;
-                     std::cout << "Inner / outer (j=0) = " << inner(i,0) 
+                     Log::file() << "Direction " << i << std::endl;
+                     Log::file() << "Inner / outer (j=0) = " << inner(i,0) 
                                << "  " << outer(i, 0) << std::endl;
-                     std::cout << "Inner / outer (j=1) = " << inner(i,1) 
+                     Log::file() << "Inner / outer (j=1) = " << inner(i,1) 
                                << "  " << outer(i, 1) << std::endl;
                      for (k = 0; k < N; ++k) {
                         atomPtr = groupIter->atomPtr(k);
                         assert(atomPtr);
                         coordinate = atomPtr->position()[i];
-                        std::cout << k << "  " << coordinate;
+                        Log::file() << k << "  " << coordinate;
                         if (atomPtr->isGhost()) {
-                           std::cout << " ghost  ";
+                           Log::file() << " ghost  ";
                         } else {
-                           std::cout << " local  "
+                           Log::file() << " local  "
                                      << atomPtr->plan().exchange(i, 0) << "  "
                                      << atomPtr->plan().exchange(i, 1);
                         }
-                        std::cout << std::endl;
-                        std::cout << std::endl;
+                        Log::file() << std::endl;
+                        Log::file() << std::endl;
                      }
                      UTIL_THROW("Group spans both upper and lower boundaries");
                   }

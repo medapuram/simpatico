@@ -1,8 +1,8 @@
-OBJ_DIR_REL =../../..
-include $(OBJ_DIR_REL)/config.mk
-include $(OBJ_DIR)/mcMd/config.mk
-include $(OBJ_DIR)/inter/config.mk
-include $(OBJ_DIR)/util/config.mk
+BLD_DIR_REL =../../..
+include $(BLD_DIR_REL)/config.mk
+include $(BLD_DIR)/mcMd/config.mk
+include $(BLD_DIR)/inter/config.mk
+include $(BLD_DIR)/util/config.mk
 include $(SRC_DIR)/mcMd/patterns.mk
 include $(SRC_DIR)/mcMd/sources.mk
 include $(SRC_DIR)/inter/sources.mk
@@ -15,12 +15,13 @@ else
 TEST=mcMd/tests/chemistry/Test
 endif
 
-all: $(mcMd_tests_chemistry_OBJS) $(OBJ_DIR)/$(TEST)
+all: $(mcMd_tests_chemistry_OBJS) 
 
 clean:
-	rm -f $(mcMd_tests_chemistry_OBJS) $(mcMd_tests_chemistry_OBJS:.o=.d)
-	rm -f $(OBJ_DIR)/$(TEST) 
-	make clean-outputs
+	rm -f $(mcMd_tests_chemistry_OBJS)
+	rm -f $(mcMd_tests_chemistry_OBJS:.o=.d)
+	rm -f $(mcMd_tests_chemistry_OBJS:.o=)
+	$(MAKE) clean-outputs
 
 clean-outputs:
 	rm -f ar.txt binary

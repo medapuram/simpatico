@@ -92,6 +92,8 @@ namespace DdMd
    void PairPotential::readParameters(std::istream& in)
    {
       read<double>(in, "skin", skin_);
+      nCellCut_ = 1; // Default value
+      read<int>(in, "nCellCut", nCellCut_, false);  // optional parameter
       read<int>(in, "pairCapacity", pairCapacity_);
       read<Boundary>(in, "maxBoundary", maxBoundary_);
       cutoff_ = maxPairCutoff() + skin_;
@@ -105,6 +107,7 @@ namespace DdMd
    {
   
       loadParameter<double>(ar, "skin", skin_);
+      loadParameter<int>(ar, "nCellCut", nCellCut_, false);
       loadParameter<int>(ar, "pairCapacity", pairCapacity_);
       loadParameter<Boundary>(ar, "maxBoundary", maxBoundary_);
 
@@ -120,6 +123,7 @@ namespace DdMd
    void PairPotential::save(Serializable::OArchive& ar)
    {
       ar << skin_;
+      Parameter::saveOptional(ar, nCellCut_, true);
       ar << pairCapacity_;
       ar << maxBoundary_;
       ar << cutoff_;
@@ -149,7 +153,7 @@ namespace DdMd
 
       // Allocate CellList
       int totalCapacity = localCapacity + storage().ghostCapacity();
-      cellList_.allocate(totalCapacity, lower, upper, cutoffs);
+      cellList_.allocate(totalCapacity, lower, upper, cutoffs, nCellCut_);
    }
 
    /*
@@ -170,7 +174,7 @@ namespace DdMd
          lower[i] = domain().domainBound(i, 0);
          upper[i] = domain().domainBound(i, 1);
       }
-      cellList_.makeGrid(lower, upper, cutoffs);
+      cellList_.makeGrid(lower, upper, cutoffs, nCellCut_);
       cellList_.clear();
 
       // Add all atoms to the cell list. 
@@ -326,11 +330,11 @@ namespace DdMd
          na = cellPtr->nAtom();
          nn = neighbors.size();
          for (i = 0; i < na; ++i) {
-            atomPtr0 = neighbors[i];
+            atomPtr0 = neighbors[i]->ptr();
 
             // Loop over atoms in this cell
             for (j = 0; j < na; ++j) {
-               atomPtr1 = neighbors[j];
+               atomPtr1 = neighbors[j]->ptr();
                if (atomPtr1 > atomPtr0) {
                   f.subtract(atomPtr0->position(), atomPtr1->position());
                   rsq = f.square();
@@ -343,7 +347,7 @@ namespace DdMd
             // Loop over atoms in neighboring cells.
             if (reverseUpdateFlag()) {
                for (j = na; j < nn; ++j) {
-                  atomPtr1 = neighbors[j];
+                  atomPtr1 = neighbors[j]->ptr();
                   f.subtract(atomPtr0->position(), atomPtr1->position());
                   rsq = f.square();
                   if (rsq < cutoffSq) {
@@ -352,7 +356,7 @@ namespace DdMd
                }
             } else {
                for (j = na; j < nn; ++j) {
-                  atomPtr1 = neighbors[j];
+                  atomPtr1 = neighbors[j]->ptr();
                   f.subtract(atomPtr0->position(), atomPtr1->position());
                   rsq = f.square();
                   if (rsq < cutoffSq) {

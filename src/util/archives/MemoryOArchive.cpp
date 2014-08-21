@@ -9,6 +9,7 @@
 */
 
 #include "MemoryOArchive.h"
+#include <util/misc/Memory.h>
 
 #include <sstream>
 
@@ -33,7 +34,12 @@ namespace Util
    * Destructor.
    */
    MemoryOArchive::~MemoryOArchive()
-   {  if (buffer_ && ownsData_) delete buffer_; }
+   {  
+      if (buffer_ && ownsData_) {
+         //delete buffer_; 
+         Memory::deallocate<Byte>(buffer_, capacity_ + sizeof(size_t));
+      }
+   }
 
    /*
    * Allocate a block of memory.
@@ -43,7 +49,8 @@ namespace Util
       if (begin_) {
          UTIL_THROW("Re-allocation is prohibited");
       }
-      buffer_ = new Byte[capacity + sizeof(size_t)];
+      // buffer_ = new Byte[capacity + sizeof(size_t)];
+      Memory::allocate<Byte>(buffer_, capacity + sizeof(size_t));
       begin_  = buffer_ + sizeof(size_t);
       cursor_ = begin();
       endAllocated_ = begin_ + capacity; 

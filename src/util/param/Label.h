@@ -8,6 +8,7 @@
 * Distributed under the terms of the GNU General Public License.
 */
 
+#include <util/global.h>
 #include <iostream>
 #include <string>
 #include <string>
@@ -53,10 +54,17 @@ namespace Util
       /**
       * Constructor.
       *
-      * \param label      label string that precedes value in file format
       * \param isRequired Is this label a required entry? (true by default)
       */
-      explicit Label(const char* label, bool isRequired = true);
+      explicit Label(bool isRequired = true);
+
+      /**
+      * Constructor.
+      *
+      * \param string  label string that precedes value in file format
+      * \param isRequired Is this label a required entry? (true by default)
+      */
+      Label(const char* string, bool isRequired = true);
 
       /**
       * Copy constructor.
@@ -69,6 +77,13 @@ namespace Util
       * Destructor.
       */
       ~Label();
+
+      /**
+      * Set the label string.
+      *
+      * \param string label string that precedes value in file format
+      */
+      void setString(std::string string);
 
       /**
       * Return label string.
@@ -85,8 +100,8 @@ namespace Util
       /// Is this label a required entry ? (passed to constructor).
       bool isRequired_;
 
-      /// Expected label (passed to constructor).
-      std::string label_;
+      /// Expected label string.
+      std::string string_;
 
    // Static members:
 
